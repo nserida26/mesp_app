@@ -1,113 +1,90 @@
 @extends('layouts.app')
 
-@section('title', isset($user) ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur')
+@section('title', isset($user) ? 'Modifier utilisateur' : 'Nouvel utilisateur')
 
 @section('content')
-<div class="layout-dashboard">
+<div class="md:flex">
     @include('partials.sidebar')
 
-    <div style="padding:2rem; overflow-x:auto;">
-
-        <div class="d-flex align-center gap-2 mb-3">
-            <a href="{{ route('admin.users.index') }}" class="btn btn-outline btn-sm">
-                <i class="bi bi-arrow-start"></i> Retour
-            </a>
-            <h1 style="font-size:1.4rem; margin:0;">
-                {{ isset($user) ? 'Modifier : ' . $user->name : 'Nouvel utilisateur' }}
-            </h1>
+    <section class="min-w-0 flex-1 p-4 md:p-8">
+        <div class="mb-6 flex items-center justify-between gap-3">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ isset($user) ? 'Modifier utilisateur' : 'Nouvel utilisateur' }}</h1>
+                <p class="mt-1 text-sm text-gray-500">Compte, role et institution associee.</p>
+            </div>
+            <a href="{{ route('admin.users.index') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700">Retour</a>
         </div>
 
-        <div class="card" style="max-width:640px;">
-            <div class="card-header">
-                <i class="bi bi-person-badge"></i>
-                Informations du compte
+        @if($errors->any())
+            <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                @foreach($errors->all() as $err)
+                    <div>{{ $err }}</div>
+                @endforeach
             </div>
-            <div class="card-body">
+        @endif
 
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <i class="bi bi-x-circle-fill"></i>
-                        <div>@foreach($errors->all() as $err)<div>{{ $err }}</div>@endforeach</div>
-                    </div>
-                @endif
+        <form method="POST" action="{{ isset($user) ? route('admin.users.update', $user) : route('admin.users.store') }}" class="max-w-3xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            @csrf
+            @if(isset($user))
+                @method('PUT')
+            @endif
 
-                <form method="POST" action="{{ isset($user) ? route('admin.users.update', $user) : route('admin.users.store') }}" novalidate>
-                    @csrf
-                    @if(isset($user)) @method('PUT') @endif
+            <div class="grid gap-4 md:grid-cols-2">
+                <label class="block">
+                    <span class="mb-1 block text-sm font-medium text-gray-700">Nom complet <span class="text-red-600">*</span></span>
+                    <input type="text" name="name" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" value="{{ old('name', $user->name ?? '') }}" required>
+                    @error('name')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
+                </label>
 
-                    <div class="form-group">
-                        <label class="form-label">Nom complet <span class="required">*</span></label>
-                        <div class="input-wrap">
-                            <span class="input-icon"><i class="bi bi-person"></i></span>
-                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                                value="{{ old('name', $user->name ?? '') }}" required>
-                        </div>
-                        @error('name')<p class="form-error">{{ $message }}</p>@enderror
-                    </div>
+                <label class="block">
+                    <span class="mb-1 block text-sm font-medium text-gray-700">Email <span class="text-red-600">*</span></span>
+                    <input type="email" name="email" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" value="{{ old('email', $user->email ?? '') }}" required>
+                    @error('email')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
+                </label>
 
-                    <div class="form-group">
-                        <label class="form-label">Email <span class="required">*</span></label>
-                        <div class="input-wrap">
-                            <span class="input-icon"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                                value="{{ old('email', $user->email ?? '') }}" required>
-                        </div>
-                        @error('email')<p class="form-error">{{ $message }}</p>@enderror
-                    </div>
+                <label class="block md:col-span-2">
+                    <span class="mb-1 block text-sm font-medium text-gray-700">Institution</span>
+                    <select name="institution_id" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">Aucune institution</option>
+                        @foreach($institutions as $institution)
+                            <option value="{{ $institution->id }}" @selected((string) old('institution_id', $user->institution_id ?? '') === (string) $institution->id)>
+                                {{ $institution->nom }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('institution_id')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
+                </label>
 
-                    {{-- Roles --}}
-                    <div class="form-group">
-                        <label class="form-label">Rôle(s) <span class="required">*</span></label>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:.5rem; padding:.75rem; border:1.5px solid var(--border-dark); border-radius:var(--radius-md); background:var(--bg);">
-                            @foreach($roles as $role)
-                            <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer; font-size:.87rem; color:var(--text-secondary);">
-                                <input type="checkbox" name="roles[]" value="{{ $role->name }}"
-                                    style="width:15px;height:15px;accent-color:var(--green);cursor:pointer;"
-                                    {{ (isset($user) && $user->hasRole($role->name)) || in_array($role->name, old('roles', [])) ? 'checked' : '' }}>
-                                {{ __('roles.'.$role->name) }}
+                <fieldset class="md:col-span-2">
+                    <legend class="mb-2 block text-sm font-medium text-gray-700">Roles <span class="text-red-600">*</span></legend>
+                    <div class="grid gap-2 rounded-md border border-gray-200 p-3 md:grid-cols-3">
+                        @foreach($roles as $role)
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="roles[]" value="{{ $role->name }}" class="rounded border-gray-300 text-primary" @checked((isset($user) && $user->hasRole($role->name)) || in_array($role->name, old('roles', []), true))>
+                                {{ $role->name }}
                             </label>
-                            @endforeach
-                        </div>
-                        @error('roles')<p class="form-error">{{ $message }}</p>@enderror
+                        @endforeach
                     </div>
+                    @error('roles')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
+                </fieldset>
 
-                    <hr class="divider">
+                <label class="block">
+                    <span class="mb-1 block text-sm font-medium text-gray-700">Mot de passe {{ isset($user) ? '(optionnel)' : '*' }}</span>
+                    <input type="password" name="password" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" {{ !isset($user) ? 'required' : '' }}>
+                    @error('password')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
+                </label>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">
-                                Mot de passe {{ isset($user) ? '(laisser vide = inchangé)' : '' }}
-                                @if(!isset($user))<span class="required">*</span>@endif
-                            </label>
-                            <div class="input-wrap">
-                                <span class="input-icon"><i class="bi bi-lock"></i></span>
-                                <input type="password" name="password"
-                                    class="form-control @error('password') is-invalid @enderror"
-                                    {{ !isset($user) ? 'required' : '' }}>
-                            </div>
-                            @error('password')<p class="form-error">{{ $message }}</p>@enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Confirmer le mot de passe</label>
-                            <div class="input-wrap">
-                                <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
-                                <input type="password" name="password_confirmation" class="form-control">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2" style="margin-top:1rem;">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check2-circle"></i>
-                            {{ isset($user) ? 'Enregistrer' : 'Créer l\'utilisateur' }}
-                        </button>
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline">Annuler</a>
-                    </div>
-                </form>
+                <label class="block">
+                    <span class="mb-1 block text-sm font-medium text-gray-700">Confirmation</span>
+                    <input type="password" name="password_confirmation" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                </label>
             </div>
-        </div>
 
-    </div>
+            <div class="mt-6 flex gap-3">
+                <button type="submit" class="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-600">Enregistrer</button>
+                <a href="{{ route('admin.users.index') }}" class="rounded-md border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700">Annuler</a>
+            </div>
+        </form>
+    </section>
 </div>
 @endsection

@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Inscription extends Model
@@ -37,15 +36,13 @@ class Inscription extends Model
         parent::boot();
 
         static::creating(function ($inscription) {
-            // Génération automatique du numéro d'inscription
             $inscription->numero_inscription = 'INS-' . date('Y') . '-' . Str::random(8);
 
-            // Génération du QR code pour vérification
+            // Existing schema requires this unique code even though public QR verification is disabled.
             $inscription->qr_code_verification = Str::random(32);
         });
     }
 
-    // Relations
     public function etudiant()
     {
         return $this->belongsTo(Etudiant::class, 'etudiant_id', 'id');
@@ -56,35 +53,19 @@ class Inscription extends Model
         return $this->belongsTo(Filiere::class, 'filiere_id', 'id');
     }
 
-    // Génération du QR Code
-    public function generateQrCode()
-    {
-        $data = [
-            'numero_inscription' => $this->numero_inscription,
-            'qr_code' => $this->qr_code_verification,
-            'verification_url' => route('public.verify.qr', ['code' => $this->qr_code_verification])
-        ];
-
-        return QrCode::size(300)->generate(json_encode($data));
-    }
-
-    // Scope pour les inscriptions actives
     public function scopeActives($query)
     {
         return $query->where('statut', 'actif');
     }
 
-    // Vérification de la validité académique
     public function estValide()
     {
         $institution = $this->filiere->institution;
 
-        // Vérifier l'accréditation
         if (!$institution->accreditationActive) {
             return false;
         }
 
-        // Vérifier si la filière est active
         if ($this->filiere->statut !== 'active') {
             return false;
         }

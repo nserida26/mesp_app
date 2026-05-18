@@ -34,22 +34,22 @@ class Filiere extends Model
     // Relations
     public function institution()
     {
-        return $this->belongsTo(Institution::class);
+        return $this->belongsTo(Institution::class, 'institution_id', 'id');
     }
 
     public function inscriptions()
     {
-        return $this->hasMany(Inscription::class);
+        return $this->hasMany(Inscription::class, 'filiere_id', 'id');
     }
 
     public function inscriptionsActives()
     {
-        return $this->hasMany(Inscription::class)->where('statut', 'actif');
+        return $this->hasMany(Inscription::class, 'filiere_id', 'id')->where('statut', 'actif');
     }
 
     public function enseignants()
     {
-        return $this->belongsToMany(Enseignant::class, 'affectation_enseignant')
+        return $this->belongsToMany(Enseignant::class, 'affectation_enseignant', 'filiere_id', 'enseignant_id', 'id', 'id')
             ->withPivot(['institution_id', 'volume_horaire', 'type_contrat', 'annee_universitaire'])
             ->withTimestamps();
     }

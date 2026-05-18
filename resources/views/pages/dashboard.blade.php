@@ -4,7 +4,13 @@
 
 @section('content')
 
-<div class="layout-dashboard">
+<div
+    data-vue-component="AdminDashboard"
+    data-props='@json(["stats" => $stats])'
+    v-cloak
+></div>
+
+<div class="hidden layout-dashboard">
 
     {{-- ── Sidebar ── --}}
     <aside class="sidebar">

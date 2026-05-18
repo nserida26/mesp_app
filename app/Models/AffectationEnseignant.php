@@ -28,17 +28,17 @@ class AffectationEnseignant extends Pivot
     // Relations
     public function enseignant()
     {
-        return $this->belongsTo(Enseignant::class);
+        return $this->belongsTo(Enseignant::class, 'enseignant_id', 'id');
     }
 
     public function institution()
     {
-        return $this->belongsTo(Institution::class);
+        return $this->belongsTo(Institution::class, 'institution_id', 'id');
     }
 
     public function filiere()
     {
-        return $this->belongsTo(Filiere::class);
+        return $this->belongsTo(Filiere::class, 'filiere_id', 'id');
     }
 
     // Accesseurs

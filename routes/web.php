@@ -15,7 +15,6 @@ use App\Http\Controllers\EnseignantController;
 use App\Http\Controllers\AccreditationController;
 use App\Http\Controllers\CalendrierController;
 use App\Http\Controllers\VerificationController;
-use Illuminate\Support\Facades\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +22,8 @@ use Illuminate\Support\Facades\Request;
 | Works with mcamara/laravel-localization session-based locale
 |--------------------------------------------------------------------------
 */
+
+Route::redirect('/', '/pub');
 
 Route::get('/lang/{locale}', [LanguageController::class, 'switch'])
     ->name('lang.switch')
@@ -35,7 +36,7 @@ Route::get('/lang/{locale}', [LanguageController::class, 'switch'])
 */
 
 // Espace Public
-Route::prefix('public')->name('public.')->group(function () {
+Route::prefix('pub')->name('public.')->group(function () {
 
     // Page d'accueil du portail public
     Route::get('/', [App\Http\Controllers\Public\HomeController::class, 'index'])->name('home');
@@ -43,19 +44,11 @@ Route::prefix('public')->name('public.')->group(function () {
     // Vérification d'un étudiant
     Route::get('/verify', [App\Http\Controllers\Public\VerificationController::class, 'index'])->name('verify');
     Route::post('/verify', [App\Http\Controllers\Public\VerificationController::class, 'check'])->name('verify.check');
-    Route::get('/verify/qr/{code}', [App\Http\Controllers\Public\VerificationController::class, 'qrVerify'])->name('verify.qr');
-    // Route de redirection pour le formulaire QR
-    Route::get('/public/verify/qr-redirect', function (Request $request) {
-        $code = $request->query('code');
-        if ($code) {
-            return redirect()->route('public.verify.qr', ['code' => $code]);
-        }
-        return redirect()->route('public.verify')->with('error', 'Code QR manquant');
-    })->name('public.verify.qr.redirect');
     // Liste des institutions accréditées (publique)
     Route::get('/institutions', [App\Http\Controllers\Public\InstitutionController::class, 'index'])->name('institutions');
     Route::get('/institutions/{uuid}', [App\Http\Controllers\Public\InstitutionController::class, 'show'])->name('institutions.show');
     Route::get('/etudiants', [App\Http\Controllers\Public\EtudiantController::class, 'index'])->name('etudiants');
+    Route::get('/enseignants', [App\Http\Controllers\Public\EnseignantController::class, 'index'])->name('enseignants');
 
     // Liste des filières autorisées
     Route::get('/filieres', [App\Http\Controllers\Public\FiliereController::class, 'index'])->name('filieres');
@@ -187,11 +180,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/imports',      [\App\Http\Controllers\Admin\ImportController::class, 'index'])->name('imports.index');
+        Route::post('/imports',     [\App\Http\Controllers\Admin\ImportController::class, 'store'])->name('imports.store');
         Route::resource('users',       \App\Http\Controllers\Admin\UserController::class);
         Route::resource('roles',       \App\Http\Controllers\Admin\RoleController::class);
         Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
         Route::get('/audit-logs',      [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])
             ->middleware('can:view audit-logs')
             ->name('audit-logs');
+        Route::get('/{resource}', [\App\Http\Controllers\Admin\ResourceController::class, 'index'])->name('resources.index');
+        Route::get('/{resource}/create', [\App\Http\Controllers\Admin\ResourceController::class, 'create'])->name('resources.create');
+        Route::post('/{resource}', [\App\Http\Controllers\Admin\ResourceController::class, 'store'])->name('resources.store');
+        Route::get('/{resource}/{id}', [\App\Http\Controllers\Admin\ResourceController::class, 'show'])->name('resources.show');
+        Route::get('/{resource}/{id}/edit', [\App\Http\Controllers\Admin\ResourceController::class, 'edit'])->name('resources.edit');
+        Route::put('/{resource}/{id}', [\App\Http\Controllers\Admin\ResourceController::class, 'update'])->name('resources.update');
+        Route::delete('/{resource}/{id}', [\App\Http\Controllers\Admin\ResourceController::class, 'destroy'])->name('resources.destroy');
     });
 });

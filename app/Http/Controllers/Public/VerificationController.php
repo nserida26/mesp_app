@@ -3,70 +3,120 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\Enseignant;
 use App\Models\Etudiant;
-use App\Models\Inscription;
+use App\Models\Filiere;
+use App\Models\Institution;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class VerificationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('public.verification.index');
+        return view('public.verification.index', [
+            'captcha' => $this->refreshCaptcha($request),
+        ]);
     }
 
     public function check(Request $request)
     {
         $request->validate([
-            'numero_bac' => 'required|string|min:5',
-            'captcha' => 'required|string'
+            'type' => 'nullable|in:student,teacher,institution,formation',
+            'captcha' => 'required|string',
         ]);
 
-        // Validation simple du captcha (version démo)
-        if ($request->captcha !== $request->captcha_expected) {
-            return back()
-                ->withInput()
-                ->with('error', 'Code de sécurité incorrect.');
+        if (!hash_equals((string) $request->session()->get('verification_captcha'), $request->captcha)) {
+            $this->refreshCaptcha($request);
+
+            return back()->withInput()->with('error', 'Code de securite incorrect.');
         }
 
-        $resultat = Etudiant::verifyByNumeroBac($request->numero_bac);
+        $request->session()->forget('verification_captcha');
+
+        $resultat = match ($request->input('type', 'student')) {
+            'institution' => $this->verifyInstitution($request),
+            'formation' => $this->verifyFormation($request),
+            'teacher' => $this->verifyTeacher($request),
+            default => $this->verifyStudent($request),
+        };
 
         if (!$resultat) {
-            return back()
-                ->withInput()
-                ->with('error', 'Aucun étudiant trouvé avec ce numéro de baccalauréat.');
+            return back()->withInput()->with('error', 'Aucun resultat valide trouve pour cette verification.');
         }
 
         return view('public.verification.resultat', compact('resultat'));
     }
 
-    public function qrVerify($code)
+    private function verifyStudent(Request $request): ?array
     {
-        $inscription = Inscription::where('qr_code_verification', $code)
-            ->with(['etudiant', 'filiere.institution'])
+        $request->validate(['numero_national' => 'required|string|min:5']);
+
+        return Etudiant::verifyByNumeroNational($request->numero_national);
+    }
+
+    private function verifyInstitution(Request $request): ?array
+    {
+        $request->validate(['code_etablissement' => 'required|string|min:2']);
+
+        $term = $request->code_etablissement;
+        $institution = Institution::query()
+            ->with('accreditationActive')
+            ->where('code_etablissement', $term)
+            ->orWhere('nom', 'like', "%{$term}%")
             ->first();
 
-        if (!$inscription) {
-            return view('public.verification.index')
-                ->with('error', 'Code QR invalide ou expiré.');
+        if (!$institution) {
+            return null;
         }
 
-        if (!$inscription->estValide()) {
-            return view('public.verification.resultat', [
-                'resultat' => ['status' => 'invalide']
-            ]);
-        }
-
-        $resultat = [
-            'status' => 'valide',
-            'niveau' => $inscription->filiere->niveau,
-            'filiere' => $inscription->filiere->nom,
-            'institution' => $inscription->filiere->institution->nom,
-            'annee' => $inscription->annee_universitaire,
-            'semestre' => $inscription->semestre_courant,
-            'numero_inscription' => $inscription->numero_inscription,
-            'qr_code_verification' => $inscription->qr_code_verification
+        return [
+            'status' => $institution->accreditationActive ? 'valide' : 'invalide',
+            'type' => 'institution',
+            'institution' => $institution->nom,
+            'ville' => $institution->ville,
+            'statut' => $institution->statut,
+            'date_fin' => $institution->accreditationActive?->date_fin?->format('d/m/Y'),
         ];
+    }
 
-        return view('public.verification.resultat', compact('resultat'));
+    private function verifyFormation(Request $request): ?array
+    {
+        $request->validate(['code_filiere' => 'required|string|min:2']);
+
+        $term = $request->code_filiere;
+        $filiere = Filiere::query()
+            ->with('institution.accreditationActive')
+            ->where('code_filiere', $term)
+            ->orWhere('nom', 'like', "%{$term}%")
+            ->first();
+
+        if (!$filiere) {
+            return null;
+        }
+
+        return [
+            'status' => $filiere->estValide() ? 'valide' : 'invalide',
+            'type' => 'formation',
+            'niveau' => $filiere->niveau,
+            'filiere' => $filiere->nom,
+            'institution' => $filiere->institution->nom,
+            'statut' => $filiere->statut,
+        ];
+    }
+
+    private function verifyTeacher(Request $request): ?array
+    {
+        $request->validate(['numero_national' => 'required|string|min:5']);
+
+        return Enseignant::verifyByNumeroNational($request->numero_national);
+    }
+
+    private function refreshCaptcha(Request $request): string
+    {
+        $captcha = Str::upper(Str::random(6));
+        $request->session()->put('verification_captcha', $captcha);
+
+        return $captcha;
     }
 }

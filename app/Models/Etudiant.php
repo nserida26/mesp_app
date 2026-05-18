@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Hash;
 
 class Etudiant extends Model
 {
@@ -41,13 +41,21 @@ class Etudiant extends Model
     // Mutator pour crypter automatiquement le numéro national
     public function setNumeroNationalAttribute($value)
     {
-        $this->attributes['numero_national'] = Crypt::encryptString($value);
+        $this->attributes['numero_national'] = $value ? Crypt::encryptString(trim($value)) : null;
     }
 
     // Accesseur pour décrypter
     public function getNumeroNationalAttribute($value)
     {
-        return $value ? Crypt::decryptString($value) : null;
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException $e) {
+            return $value;
+        }
     }
 
     // Mutator pour hasher le numéro de bac
@@ -78,26 +86,66 @@ class Etudiant extends Model
             ->with(['inscriptionActive.filiere.institution'])
             ->first();
 
+        return self::verificationResult($etudiant);
+    }
+
+    public static function verifyByNumeroNational($numeroNational)
+    {
+        $numeroNational = trim($numeroNational);
+
+        $etudiant = self::whereNotNull('numero_national')
+            ->with(['inscriptionActive.filiere.institution'])
+            ->get()
+            ->first(fn (Etudiant $etudiant) => hash_equals($numeroNational, trim((string) $etudiant->numero_national)));
+
+        return self::verificationResult($etudiant);
+    }
+
+    public static function uuidsMatchingNumeroNational($numeroNational)
+    {
+        $numeroNational = trim($numeroNational);
+
+        if ($numeroNational === '') {
+            return collect();
+        }
+
+        return self::whereNotNull('numero_national')
+            ->get(['uuid', 'numero_national'])
+            ->filter(fn (Etudiant $etudiant) => hash_equals($numeroNational, trim((string) $etudiant->numero_national)))
+            ->pluck('uuid');
+    }
+
+    private static function verificationResult(?Etudiant $etudiant): ?array
+    {
         if (!$etudiant || !$etudiant->inscriptionActive) {
             return null;
         }
 
         return [
             'status' => 'valide',
+            'type' => 'student',
             'niveau' => $etudiant->inscriptionActive->filiere->niveau,
             'filiere' => $etudiant->inscriptionActive->filiere->nom,
             'institution' => $etudiant->inscriptionActive->filiere->institution->nom,
             'annee' => $etudiant->inscriptionActive->annee_universitaire,
             'semestre' => $etudiant->inscriptionActive->semestre_courant,
-            'qr_code' => $etudiant->inscriptionActive->qr_code_verification
+            'numero_inscription' => $etudiant->inscriptionActive->numero_inscription,
         ];
     }
 
     // Scope pour recherche sécurisée
     public function scopeSearch($query, $term)
     {
-        return $query->where('nom', 'like', "%{$term}%")
-            ->orWhere('prenom', 'like', "%{$term}%")
-            ->orWhere('email', 'like', "%{$term}%");
+        $matchingUuids = self::uuidsMatchingNumeroNational($term);
+
+        return $query->where(function ($q) use ($term, $matchingUuids) {
+            $q->where('nom', 'like', "%{$term}%")
+                ->orWhere('prenom', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%");
+
+            if ($matchingUuids->isNotEmpty()) {
+                $q->orWhereIn('uuid', $matchingUuids);
+            }
+        });
     }
 }

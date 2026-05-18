@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
 
 class Enseignant extends Model
 {
@@ -16,6 +18,7 @@ class Enseignant extends Model
     protected $fillable = [
         'nom',
         'prenom',
+        'numero_national',
         'numero_accreditation',
         'grade',
         'specialite',
@@ -29,17 +32,35 @@ class Enseignant extends Model
         'updated_at' => 'datetime',
     ];
 
+    public function setNumeroNationalAttribute($value)
+    {
+        $this->attributes['numero_national'] = $value ? Crypt::encryptString(trim($value)) : null;
+    }
+
+    public function getNumeroNationalAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException $e) {
+            return $value;
+        }
+    }
+
     // Relations
     public function institutions()
     {
-        return $this->belongsToMany(Institution::class, 'affectation_enseignant')
+        return $this->belongsToMany(Institution::class, 'affectation_enseignant', 'enseignant_id', 'institution_id', 'id', 'id')
             ->withPivot(['filiere_id', 'volume_horaire', 'type_contrat', 'annee_universitaire'])
             ->withTimestamps();
     }
 
     public function filieres()
     {
-        return $this->belongsToMany(Filiere::class, 'affectation_enseignant')
+        return $this->belongsToMany(Filiere::class, 'affectation_enseignant', 'enseignant_id', 'filiere_id', 'id', 'id')
             ->withPivot(['institution_id', 'volume_horaire', 'type_contrat', 'annee_universitaire'])
             ->withTimestamps();
     }
@@ -48,7 +69,7 @@ class Enseignant extends Model
     {
         $anneeActuelle = date('Y');
 
-        return $this->hasMany(AffectationEnseignant::class)
+        return $this->hasMany(AffectationEnseignant::class, 'enseignant_id', 'id')
             ->where('annee_universitaire', $anneeActuelle);
     }
 
@@ -141,6 +162,37 @@ class Enseignant extends Model
                 'class' => 'bg-gray-100 text-gray-800'
             ]
         };
+    }
+
+    public static function verifyByNumeroNational($numeroNational): ?array
+    {
+        $numeroNational = trim($numeroNational);
+
+        $enseignant = self::whereNotNull('numero_national')
+            ->with(['affectationsActuelles.institution', 'affectationsActuelles.filiere'])
+            ->get()
+            ->first(fn (Enseignant $enseignant) => hash_equals($numeroNational, trim((string) $enseignant->numero_national)));
+
+        if (!$enseignant) {
+            return null;
+        }
+
+        $affectation = $enseignant->affectationsActuelles->first();
+
+        return [
+            'status' => $enseignant->statut === 'actif' ? 'valide' : 'invalide',
+            'type' => 'teacher',
+            'nom' => $enseignant->nom,
+            'prenom' => $enseignant->prenom,
+            'numero_national' => $enseignant->numero_national,
+            'numero_accreditation' => $enseignant->numero_accreditation,
+            'grade' => $enseignant->grade_complet,
+            'specialite' => $enseignant->specialite,
+            'statut' => $enseignant->statut,
+            'institution' => $affectation?->institution?->nom,
+            'filiere' => $affectation?->filiere?->nom,
+            'annee' => $affectation?->annee_universitaire,
+        ];
     }
 
     public function getVolumeHoraireTotalAttribute()

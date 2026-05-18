@@ -6,20 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Str;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids;
-
-    protected $primaryKey = 'uuid';
-    protected $keyType = 'string';
-    public $incrementing = false;
+    use HasApiTokens, HasFactory, Notifiable;
+    use HasRoles {
+        hasRole as protected hasSpatieRole;
+        hasAnyRole as protected hasAnySpatieRole;
+    }
 
     protected $fillable = [
         'name',
         'email',
         'password',
+        'uuid',
         'role',
         'institution_id'
     ];
@@ -37,7 +39,12 @@ class User extends Authenticatable
     // Relations
     public function institution()
     {
-        return $this->belongsTo(Institution::class);
+        return $this->belongsTo(Institution::class, 'institution_id', 'id');
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 
     // Méthodes de vérification des rôles
@@ -61,14 +68,26 @@ class User extends Authenticatable
         return $this->role === 'public';
     }
 
-    public function hasRole($role)
+    public function hasRole($roles, ?string $guard = null): bool
     {
-        return $this->role === $role;
+        if ($this->hasSpatieRole($roles, $guard)) {
+            return true;
+        }
+
+        if (is_string($roles)) {
+            return $this->role === $roles;
+        }
+
+        if (is_array($roles)) {
+            return in_array($this->role, $roles, true);
+        }
+
+        return false;
     }
 
-    public function hasAnyRole(array $roles)
+    public function hasAnyRole(...$roles): bool
     {
-        return in_array($this->role, $roles);
+        return $this->hasRole($roles);
     }
 
     // Accesseurs
@@ -165,6 +184,10 @@ class User extends Authenticatable
     protected static function booted()
     {
         static::creating(function ($user) {
+            if (!$user->uuid) {
+                $user->uuid = (string) Str::uuid();
+            }
+
             if (!$user->role) {
                 $user->role = 'public';
             }

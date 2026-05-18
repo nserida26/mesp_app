@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Institution;
 use App\Models\Filiere;
 use App\Models\Inscription;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -23,6 +24,9 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        return view('public.home', compact('stats', 'institutions_recentes'));
+        $captcha = Str::upper(Str::random(6));
+        session(['verification_captcha' => $captcha]);
+
+        return view('public.home', compact('stats', 'institutions_recentes', 'captcha'));
     }
 }

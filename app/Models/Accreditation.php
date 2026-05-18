@@ -36,7 +36,7 @@ class Accreditation extends Model
     // Relations
     public function institution()
     {
-        return $this->belongsTo(Institution::class);
+        return $this->belongsTo(Institution::class, 'institution_id', 'id');
     }
 
     // Scopes

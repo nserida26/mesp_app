@@ -52,7 +52,7 @@ class Institution extends Model
 
     public function enseignants()
     {
-        return $this->belongsToMany(Enseignant::class, 'affectation_enseignant')
+        return $this->belongsToMany(Enseignant::class, 'affectation_enseignant', 'institution_id', 'enseignant_id', 'id', 'id')
             ->withPivot(['filiere_id', 'volume_horaire', 'type_contrat', 'annee_universitaire'])
             ->withTimestamps();
     }

@@ -3,14 +3,14 @@
 @section('title', $institution->nom)
 
 @section('content')
-    <div class="bg-gradient-to-r from-blue-600 to-blue-800 py-8">
+    <div class="bg-gradient-to-r from-green-600 to-green-800 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-white">
-                <a href="{{ route('public.institutions') }}" class="text-blue-100 hover:text-white mb-4 inline-block">
+                <a href="{{ route('public.institutions') }}" class="text-green-100 hover:text-white mb-4 inline-block">
                     <i class="fas fa-arrow-left mr-2"></i>Retour à la liste
                 </a>
                 <h1 class="text-3xl font-bold">{{ $institution->nom }}</h1>
-                <p class="text-blue-100 mt-2">{{ $institution->ville }}</p>
+                <p class="text-green-100 mt-2">{{ $institution->ville }}</p>
             </div>
         </div>
     </div>
@@ -25,8 +25,8 @@
                         <img src="{{ Storage::url($institution->logo_path) }}" alt="{{ $institution->nom }}"
                             class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
                     @else
-                        <div class="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-university text-blue-600 text-4xl"></i>
+                        <div class="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-university text-green-600 text-4xl"></i>
                         </div>
                     @endif
 
@@ -99,7 +99,7 @@
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">
-                        <i class="fas fa-graduation-cap text-blue-600 mr-2"></i>
+                        <i class="fas fa-graduation-cap text-green-600 mr-2"></i>
                         Filières Autorisées
                     </h2>
 
@@ -112,7 +112,7 @@
                                             <h3 class="font-semibold text-gray-900 text-lg">{{ $filiere->nom }}</h3>
                                             <p class="text-sm text-gray-500">Code: {{ $filiere->code_filiere }}</p>
                                         </div>
-                                        <span class="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                        <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
                                             {{ ucfirst($filiere->niveau) }}
                                         </span>
                                     </div>

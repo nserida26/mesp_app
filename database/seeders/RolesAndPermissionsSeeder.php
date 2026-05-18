@@ -133,9 +133,11 @@ class RolesAndPermissionsSeeder extends Seeder
             [
                 'name'     => 'Administrateur MESRS',
                 'password' => bcrypt('Admin@MESRS2026!'),
+                'role'     => 'admin',
             ]
         );
-        $admin->assignRole('admin');
+        $admin->forceFill(['role' => 'admin'])->save();
+        $admin->syncRoles(['admin']);
 
         $this->command->info('✅ Roles, permissions and default admin created.');
         $this->command->table(
