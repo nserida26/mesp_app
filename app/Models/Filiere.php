@@ -22,7 +22,8 @@ class Filiere extends Model
         'numero_arrete_autorisation',
         'date_arrete_autorisation',
         'capacite_accueil',
-        'statut'
+        'statut',
+        'accreditation_id',
     ];
 
     protected $casts = [
@@ -32,6 +33,11 @@ class Filiere extends Model
     ];
 
     // Relations
+    public function accreditation()
+    {
+        return $this->belongsTo(Accreditation::class, 'accreditation_id', 'id');
+    }
+
     public function institution()
     {
         return $this->belongsTo(Institution::class, 'institution_id', 'id');
@@ -45,6 +51,11 @@ class Filiere extends Model
     public function inscriptionsActives()
     {
         return $this->hasMany(Inscription::class, 'filiere_id', 'id')->where('statut', 'actif');
+    }
+
+    public function maquettes()
+    {
+        return $this->hasMany(Maquette::class, 'filiere_id', 'id');
     }
 
     public function enseignants()

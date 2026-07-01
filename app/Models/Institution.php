@@ -22,7 +22,8 @@ class Institution extends Model
         'telephone',
         'email',
         'statut',
-        'logo_path'
+        'logo_path',
+        'accreditation_id',
     ];
 
     protected $casts = [
@@ -32,6 +33,11 @@ class Institution extends Model
     ];
 
     // Relations
+    public function accreditation()
+    {
+        return $this->belongsTo(Accreditation::class, 'accreditation_id', 'id');
+    }
+
     public function accreditations()
     {
         return $this->hasMany(Accreditation::class, 'institution_id', 'id');

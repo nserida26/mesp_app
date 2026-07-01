@@ -16,13 +16,14 @@ class Accreditation extends Model
 
     protected $fillable = [
         'institution_id',
+        'filiere_id',
         'numero_arrete',
         'date_arrete',
         'date_debut',
         'date_fin',
         'type',
         'statut',
-        'fichier_arrete_path'
+        'fichier_arrete_path',
     ];
 
     protected $casts = [
@@ -37,6 +38,11 @@ class Accreditation extends Model
     public function institution()
     {
         return $this->belongsTo(Institution::class, 'institution_id', 'id');
+    }
+
+    public function filiere()
+    {
+        return $this->belongsTo(Filiere::class, 'filiere_id', 'id');
     }
 
     // Scopes

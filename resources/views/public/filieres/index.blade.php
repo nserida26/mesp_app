@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Filières autorisées')
+@section('title', __('lang.filieres_public.title'))
 
 @section('content')
     <section class="bg-gradient-to-br from-white via-green-50/70 to-teal-50/60 py-12">
@@ -9,11 +9,11 @@
                 <div
                     class="mb-4 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/90 px-4 py-1.5 text-sm font-semibold text-green-700 shadow-sm">
                     <i class="fas fa-graduation-cap text-teal-500"></i>
-                    @lang('lang.nav.formations')
+                    @lang('lang.filieres_public.badge')
                 </div>
-                <h1 class="text-4xl font-black text-gray-900">Filières autorisées</h1>
+                <h1 class="text-4xl font-black text-gray-900">@lang('lang.filieres_public.title')</h1>
                 <p class="mt-4 text-lg leading-relaxed text-gray-600">
-                    Liste officielle des filières accréditées dans l'enseignement supérieur privé
+                    @lang('lang.filieres_public.subtitle')
                 </p>
             </div>
         </div>
@@ -25,7 +25,7 @@
                 <div class="mb-2 text-3xl font-black">{{ number_format($stats['total_filieres']) }}</div>
                 <div class="text-sm text-green-50">
                     <i class="fas fa-book mr-1"></i>
-                    Filières actives
+                    @lang('lang.filieres_public.active_filieres')
                 </div>
             </div>
 
@@ -33,7 +33,7 @@
                 <div class="mb-2 text-3xl font-black">{{ number_format($stats['total_institutions']) }}</div>
                 <div class="text-sm text-teal-50">
                     <i class="fas fa-university mr-1"></i>
-                    Institutions
+                    @lang('lang.filieres_public.institutions')
                 </div>
             </div>
 
@@ -41,7 +41,7 @@
                 <div class="mb-2 text-3xl font-black">{{ number_format($stats['capacite_totale']) }}</div>
                 <div class="text-sm text-blue-50">
                     <i class="fas fa-chair mr-1"></i>
-                    Capacité totale
+                    @lang('lang.filieres_public.total_capacity')
                 </div>
             </div>
 
@@ -49,7 +49,7 @@
                 <div class="mb-2 text-3xl font-black">{{ number_format($stats['etudiants_inscrits']) }}</div>
                 <div class="text-sm text-green-50">
                     <i class="fas fa-user-graduate mr-1"></i>
-                    Étudiants inscrits
+                    @lang('lang.filieres_public.enrolled_students')
                 </div>
             </div>
         </div>
@@ -57,18 +57,19 @@
         <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <form method="GET" action="{{ route('public.filieres') }}" class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Rechercher</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">@lang('lang.filieres_public.search')</label>
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Nom ou code..."
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            placeholder="@lang('lang.filieres_public.search_placeholder')"
                             class="w-full rounded-xl border-gray-200 pl-10 shadow-sm focus:border-green-500 focus:ring-green-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Niveau</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">@lang('lang.filieres_public.level')</label>
                     <select name="niveau" class="w-full rounded-xl border-gray-200 shadow-sm focus:border-green-500 focus:ring-green-500">
-                        <option value="">Tous les niveaux</option>
+                        <option value="">@lang('lang.filieres_public.all_levels')</option>
                         @foreach ($niveaux as $niveau)
                             <option value="{{ $niveau }}" {{ request('niveau') == $niveau ? 'selected' : '' }}>
                                 {{ ucfirst($niveau) }}
@@ -78,9 +79,9 @@
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Institution</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">@lang('lang.filieres_public.institution')</label>
                     <select name="institution" class="w-full rounded-xl border-gray-200 shadow-sm focus:border-green-500 focus:ring-green-500">
-                        <option value="">Toutes les institutions</option>
+                        <option value="">@lang('lang.filieres_public.all_institutions')</option>
                         @foreach ($institutions as $institution)
                             <option value="{{ $institution->uuid }}"
                                 {{ request('institution') == $institution->uuid ? 'selected' : '' }}>
@@ -91,9 +92,9 @@
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Ville</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">@lang('lang.filieres_public.city')</label>
                     <select name="ville" class="w-full rounded-xl border-gray-200 shadow-sm focus:border-green-500 focus:ring-green-500">
-                        <option value="">Toutes les villes</option>
+                        <option value="">@lang('lang.filieres_public.all_cities')</option>
                         @foreach ($villes as $ville)
                             <option value="{{ $ville }}" {{ request('ville') == $ville ? 'selected' : '' }}>
                                 {{ $ville }}
@@ -106,12 +107,12 @@
                     <button type="submit"
                         class="rounded-xl bg-green-700 px-6 py-2.5 font-semibold text-white shadow-lg shadow-green-100 transition hover:bg-green-800">
                         <i class="fas fa-filter mr-2"></i>
-                        Appliquer les filtres
+                        @lang('lang.filieres_public.apply_filters')
                     </button>
                     <a href="{{ route('public.filieres') }}"
                         class="rounded-xl border border-gray-200 px-6 py-2.5 text-gray-600 hover:bg-gray-50">
                         <i class="fas fa-redo mr-2"></i>
-                        Réinitialiser
+                        @lang('lang.actions.reset')
                     </a>
                 </div>
             </form>
@@ -138,19 +139,19 @@
 
                         <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <label class="text-xs text-gray-500">Code</label>
+                                <label class="text-xs text-gray-500">@lang('lang.filieres_public.code')</label>
                                 <p class="font-mono text-gray-900">{{ $filiere->code_filiere }}</p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <label class="text-xs text-gray-500">Durée</label>
-                                <p class="text-gray-900">{{ $filiere->duree_semestres }} semestres</p>
+                                <label class="text-xs text-gray-500">@lang('lang.filieres_public.duration')</label>
+                                <p class="text-gray-900">{{ $filiere->duree_semestres }} @lang('lang.filieres_public.semesters')</p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <label class="text-xs text-gray-500">Capacité</label>
-                                <p class="text-gray-900">{{ $filiere->capacite_accueil }} places</p>
+                                <label class="text-xs text-gray-500">@lang('lang.filieres_public.capacity')</label>
+                                <p class="text-gray-900">{{ $filiere->capacite_accueil }} @lang('lang.filieres_public.places')</p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <label class="text-xs text-gray-500">Inscrits</label>
+                                <label class="text-xs text-gray-500">@lang('lang.filieres_public.enrolled')</label>
                                 <p class="text-gray-900">{{ $filiere->inscriptions_actives_count }}</p>
                             </div>
                         </div>
@@ -163,7 +164,7 @@
                         @endphp
                         <div class="mb-4">
                             <div class="mb-1 flex justify-between text-xs text-gray-500">
-                                <span>Taux de remplissage</span>
+                                <span>@lang('lang.filieres_public.fill_rate')</span>
                                 <span>{{ $tauxRemplissage }}%</span>
                             </div>
                             <div class="h-2 w-full rounded-full bg-gray-200">
@@ -175,12 +176,12 @@
                         <div class="flex items-center justify-between border-t border-gray-100 pt-3">
                             <span class="text-xs text-gray-500">
                                 <i class="fas fa-calendar mr-1"></i>
-                                Arrêté: {{ $filiere->date_arrete_autorisation->format('d/m/Y') }}
+                                @lang('lang.filieres_public.decree'): {{ $filiere->date_arrete_autorisation->format('d/m/Y') }}
                             </span>
 
                             <a href="{{ route('public.filieres.show', $filiere->uuid) }}"
                                 class="text-sm font-semibold text-green-700 hover:text-green-900">
-                                Détails
+                                @lang('lang.filieres_public.details')
                                 <i class="fas fa-arrow-right ml-1"></i>
                             </a>
                         </div>
@@ -189,8 +190,8 @@
             @empty
                 <div class="col-span-3 py-12 text-center">
                     <i class="fas fa-book mb-4 text-6xl text-gray-300"></i>
-                    <p class="text-lg text-gray-500">Aucune filière trouvée</p>
-                    <p class="mt-2 text-sm text-gray-400">Essayez de modifier vos critères de recherche</p>
+                    <p class="text-lg text-gray-500">@lang('lang.filieres_public.no_filiere')</p>
+                    <p class="mt-2 text-sm text-gray-400">@lang('lang.filieres_public.no_filiere_help')</p>
                 </div>
             @endforelse
         </div>

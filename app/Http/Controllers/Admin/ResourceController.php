@@ -11,9 +11,11 @@ use App\Models\Etudiant;
 use App\Models\Filiere;
 use App\Models\Inscription;
 use App\Models\Institution;
+use App\Models\Maquette;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ResourceController extends Controller
@@ -21,8 +23,8 @@ class ResourceController extends Controller
     private array $resources = [
         'institutions' => [
             'model' => Institution::class,
-            'label' => 'Institutions',
-            'singular' => 'institution',
+            'label' => 'lang.resources.institutions',
+            'singular' => 'lang.resources.institution',
             'title' => ['nom', 'code_etablissement'],
             'search' => ['nom', 'code_etablissement', 'ville', 'email'],
             'fields' => [
@@ -38,8 +40,8 @@ class ResourceController extends Controller
         ],
         'filieres' => [
             'model' => Filiere::class,
-            'label' => 'Filieres',
-            'singular' => 'filiere',
+            'label' => 'lang.resources.filieres',
+            'singular' => 'lang.resources.filiere',
             'title' => ['nom', 'code_filiere'],
             'search' => ['nom', 'code_filiere', 'niveau'],
             'with' => ['institution'],
@@ -55,10 +57,34 @@ class ResourceController extends Controller
                 'statut' => ['type' => 'select', 'required' => true, 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
             ],
         ],
+        'maquettes' => [
+            'model' => Maquette::class,
+            'label' => 'lang.resources.maquettes',
+            'singular' => 'lang.resources.maquette',
+            'title' => ['titre', 'niveau'],
+            'search' => ['titre', 'niveau', 'description'],
+            'with' => ['filiere'],
+            'fields' => [
+                'filiere_id' => ['type' => 'relation', 'required' => true, 'model' => Filiere::class, 'label_field' => 'nom', 'label' => 'lang.fields.filiere'],
+                'titre' => ['type' => 'text', 'required' => true, 'label' => 'lang.fields.title'],
+                'niveau' => ['type' => 'select', 'required' => true, 'label' => 'lang.fields.level', 'options' => [
+                    'L1' => 'L1',
+                    'L2' => 'L2',
+                    'L3' => 'L3',
+                    'M1' => 'M1',
+                    'M2' => 'M2',
+                    'D1' => 'D1',
+                    'D2' => 'D2',
+                    'D3' => 'D3',
+                ]],
+                'description' => ['type' => 'textarea', 'label' => 'lang.fields.description'],
+                'fichier_path' => ['type' => 'file', 'label' => 'lang.fields.file', 'accept' => '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp'],
+            ],
+        ],
         'etudiants' => [
             'model' => Etudiant::class,
-            'label' => 'Etudiants',
-            'singular' => 'etudiant',
+            'label' => 'lang.resources.etudiants',
+            'singular' => 'lang.resources.etudiant',
             'title' => ['nom', 'prenom'],
             'search' => ['nom', 'prenom', 'email'],
             'fields' => [
@@ -77,8 +103,8 @@ class ResourceController extends Controller
         ],
         'inscriptions' => [
             'model' => Inscription::class,
-            'label' => 'Inscriptions',
-            'singular' => 'inscription',
+            'label' => 'lang.resources.inscriptions',
+            'singular' => 'lang.resources.inscription',
             'title' => ['numero_inscription', 'statut'],
             'search' => ['numero_inscription', 'statut', 'annee_universitaire'],
             'with' => ['etudiant', 'filiere'],
@@ -95,8 +121,8 @@ class ResourceController extends Controller
         ],
         'enseignants' => [
             'model' => Enseignant::class,
-            'label' => 'Enseignants',
-            'singular' => 'enseignant',
+            'label' => 'lang.resources.enseignants',
+            'singular' => 'lang.resources.enseignant',
             'title' => ['nom', 'prenom'],
             'search' => ['nom', 'prenom', 'numero_national', 'numero_accreditation', 'email', 'specialite'],
             'fields' => [
@@ -113,8 +139,8 @@ class ResourceController extends Controller
         ],
         'accreditations' => [
             'model' => Accreditation::class,
-            'label' => 'Accreditations',
-            'singular' => 'accreditation',
+            'label' => 'lang.resources.accreditations',
+            'singular' => 'lang.resources.accreditation',
             'title' => ['numero_arrete', 'statut'],
             'search' => ['numero_arrete', 'type', 'statut'],
             'with' => ['institution'],
@@ -131,8 +157,8 @@ class ResourceController extends Controller
         ],
         'affectations' => [
             'model' => AffectationEnseignant::class,
-            'label' => 'Affectations enseignants',
-            'singular' => 'affectation',
+            'label' => 'lang.resources.affectations',
+            'singular' => 'lang.resources.affectation',
             'title' => ['annee_universitaire', 'type_contrat'],
             'search' => ['annee_universitaire', 'type_contrat'],
             'with' => ['enseignant', 'institution', 'filiere'],
@@ -147,8 +173,8 @@ class ResourceController extends Controller
         ],
         'calendriers' => [
             'model' => CalendrierAcademique::class,
-            'label' => 'Calendriers academiques',
-            'singular' => 'calendrier',
+            'label' => 'lang.resources.calendriers',
+            'singular' => 'lang.resources.calendrier',
             'title' => ['annee_universitaire', 'statut'],
             'search' => ['annee_universitaire', 'statut'],
             'with' => ['institution'],
@@ -205,10 +231,10 @@ class ResourceController extends Controller
     public function store(Request $request, string $resource)
     {
         $config = $this->config($resource);
-        $config['model']::create($request->validate($this->rules($resource)));
+        $config['model']::create($this->validatedData($request, $resource));
 
         return redirect()->route('admin.resources.index', $resource)
-            ->with('success', $config['singular'] . ' cree avec succes.');
+            ->with('success', __('lang.crud.created', ['resource' => __($config['singular'])]));
     }
 
     public function show(string $resource, string $id)
@@ -241,16 +267,18 @@ class ResourceController extends Controller
         $item->update($this->validatedData($request, $resource, $item));
 
         return redirect()->route('admin.resources.index', $resource)
-            ->with('success', $config['singular'] . ' mis a jour.');
+            ->with('success', __('lang.crud.updated', ['resource' => __($config['singular'])]));
     }
 
     public function destroy(string $resource, string $id)
     {
         $config = $this->config($resource);
-        $this->find($config, $id)->delete();
+        $item = $this->find($config, $id);
+        $this->deleteStoredFiles($config, $item);
+        $item->delete();
 
         return redirect()->route('admin.resources.index', $resource)
-            ->with('success', $config['singular'] . ' supprime.');
+            ->with('success', __('lang.crud.deleted', ['resource' => __($config['singular'])]));
     }
 
     private function config(string $resource): array
@@ -291,8 +319,16 @@ class ResourceController extends Controller
                 'date' => 'date',
                 'number' => 'numeric',
                 'relation' => 'integer',
+                'file' => 'file',
                 default => 'string',
             };
+
+            if (($field['type'] ?? null) === 'file') {
+                $fieldRules[] = 'max:' . ($field['max'] ?? 10240);
+                if (isset($field['mimes'])) {
+                    $fieldRules[] = 'mimes:' . implode(',', $field['mimes']);
+                }
+            }
 
             if (isset($field['min'])) {
                 $fieldRules[] = 'min:' . $field['min'];
@@ -326,9 +362,30 @@ class ResourceController extends Controller
             if (($field['write_only'] ?? false) && ($validated[$name] ?? '') === '') {
                 unset($validated[$name]);
             }
+
+            if (($field['type'] ?? null) === 'file') {
+                if ($request->hasFile($name)) {
+                    if ($item && $item->{$name}) {
+                        Storage::disk('public')->delete($item->{$name});
+                    }
+
+                    $validated[$name] = $request->file($name)->store($field['directory'] ?? $resource, 'public');
+                } else {
+                    unset($validated[$name]);
+                }
+            }
         }
 
         return $validated;
+    }
+
+    private function deleteStoredFiles(array $config, Model $item): void
+    {
+        foreach ($config['fields'] as $name => $field) {
+            if (($field['type'] ?? null) === 'file' && $item->{$name}) {
+                Storage::disk('public')->delete($item->{$name});
+            }
+        }
     }
 
     private function relationOptions(string $resource): array

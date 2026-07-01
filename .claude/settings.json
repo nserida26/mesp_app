@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Imports\")",
+      "Bash(find c:\\\\\\\\Users\\\\\\\\lapto\\\\\\\\mesp_app\\\\\\\\database\\\\\\\\migrations -name \"*.php\" -type f)",
+      "Bash(php artisan *)"
+    ]
+  }
+}

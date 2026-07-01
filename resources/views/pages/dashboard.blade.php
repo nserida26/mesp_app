@@ -1,228 +1,178 @@
 @extends('layouts.app')
 
-@section('title', __('nav.dashboard') . ' — ' . config('app.name'))
+@section('title', __('lang.nav.dashboard'))
 
 @section('content')
+<div class="md:flex">
+    @include('partials.sidebar')
 
-<div
-    data-vue-component="AdminDashboard"
-    data-props='@json(["stats" => $stats])'
-    v-cloak
-></div>
+    <section class="min-w-0 flex-1 bg-[#F5F7FA] p-4 md:p-8">
 
-<div class="hidden layout-dashboard">
+        {{-- ── Page header ──────────────────────────────────────────── --}}
+        <div class="mb-8 rounded-2xl border border-green-100 bg-gradient-to-br from-white via-green-50/70 to-teal-50/60 p-5 shadow-sm md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="mb-2 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/90 px-3 py-1 text-xs font-semibold text-green-700">
+                    <i class="fas fa-landmark text-teal-500"></i>
+                    @lang('lang.admin.admin_space')
+                </p>
+                <h1 class="text-2xl font-black text-gray-900 md:text-3xl">@lang('lang.nav.dashboard')</h1>
+                <p class="mt-1 text-sm text-gray-500">{{ now()->translatedFormat('l d F Y') }}</p>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+                <i class="fas fa-circle animate-pulse text-[8px] text-green-500"></i>
+                @lang('lang.admin.system_operational')
+            </span>
+            </div>
+        </div>
 
-    {{-- ── Sidebar ── --}}
-    <aside class="sidebar">
-        <div class="sidebar-section">{{ __('nav.dashboard') }}</div>
-        <ul class="sidebar-nav">
-            <li>
-                <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="bi bi-speedometer2"></i> {{ __('nav.dashboard') }}
-                </a>
-            </li>
-        </ul>
+        {{-- ── Stat cards ───────────────────────────────────────────── --}}
+        <div class="mb-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
 
-        @can('view institutions')
-        <div class="sidebar-section">{{ __('nav.formation') }}</div>
-        <ul class="sidebar-nav">
-            <li>
-                <a href="{{ route('institutions.index') }}" class="{{ request()->routeIs('institutions.*') ? 'active' : '' }}">
-                    <i class="bi bi-building"></i> {{ __('home.mod_institutions_title') }}
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('filieres.index') }}" class="{{ request()->routeIs('filieres.*') ? 'active' : '' }}">
-                    <i class="bi bi-journal-text"></i> {{ __('home.mod_filieres_title') }}
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('accreditations.index') }}" class="{{ request()->routeIs('accreditations.*') ? 'active' : '' }}">
-                    <i class="bi bi-shield-check"></i> {{ __('home.mod_accreditation_title') }}
-                </a>
-            </li>
-        </ul>
-        @endcan
-
-        @can('view etudiants')
-        <div class="sidebar-section">{{ __('home.mod_etudiants_title') }}</div>
-        <ul class="sidebar-nav">
-            <li>
-                <a href="{{ route('etudiants.index') }}" class="{{ request()->routeIs('etudiants.*') ? 'active' : '' }}">
-                    <i class="bi bi-person-vcard"></i> {{ __('home.mod_etudiants_title') }}
-                </a>
-            </li>
-        </ul>
-        @endcan
-
-        @can('view enseignants')
-        <div class="sidebar-section">{{ __('home.mod_enseignants_title') }}</div>
-        <ul class="sidebar-nav">
-            <li>
-                <a href="{{ route('enseignants.index') }}" class="{{ request()->routeIs('enseignants.*') ? 'active' : '' }}">
-                    <i class="bi bi-person-workspace"></i> {{ __('home.mod_enseignants_title') }}
-                </a>
-            </li>
-        </ul>
-        @endcan
-
-        @can('view calendrier')
-        <div class="sidebar-section">{{ __('home.mod_calendrier_title') }}</div>
-        <ul class="sidebar-nav">
-            <li>
-                <a href="{{ route('calendrier.index') }}" class="{{ request()->routeIs('calendrier.*') ? 'active' : '' }}">
-                    <i class="bi bi-calendar3"></i> {{ __('home.mod_calendrier_title') }}
-                </a>
-            </li>
-        </ul>
-        @endcan
-
-        @role('admin')
-        <div class="sidebar-section">Administration</div>
-        <ul class="sidebar-nav">
-            <li>
-                <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <i class="bi bi-people"></i> Utilisateurs
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-                    <i class="bi bi-person-gear"></i> Rôles & permissions
-                </a>
-            </li>
-            @can('view audit-logs')
-            <li>
-                <a href="{{ route('admin.audit-logs') }}" class="{{ request()->routeIs('admin.audit-logs') ? 'active' : '' }}">
-                    <i class="bi bi-clock-history"></i> Journal d'audit
-                </a>
-            </li>
-            @endcan
-        </ul>
-        @endrole
-
-        {{-- User info at bottom --}}
-        <div style="padding:1rem 1.25rem; margin-top:2rem; border-top:1px solid var(--border);">
-            <div style="display:flex; align-items:center; gap:.65rem;">
-                <div style="width:36px;height:36px;border-radius:50%;background:var(--green-xlight);color:var(--green-dark);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;">
-                    {{ strtoupper(substr(auth()->user()->name,0,1)) }}
+            @can('view institutions')
+            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">@lang('lang.resources.institutions')</p>
+                        <p class="mt-2 text-3xl font-black text-gray-900">{{ number_format($stats['institutions'] ?? 0) }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">@lang('lang.admin.stats.institutions_unit')</p>
+                    </div>
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50">
+                        <i class="fas fa-university text-green-600"></i>
+                    </span>
                 </div>
-                <div>
-                    <div style="font-size:.85rem;font-weight:600;color:var(--text-primary);">{{ Str::limit(auth()->user()->name,20) }}</div>
-                    <div style="font-size:.75rem;color:var(--text-muted);">
-                        {{ auth()->user()->getRoleNames()->implode(', ') }}
+                <div class="mt-4 h-0.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div class="h-0.5 w-full rounded-full bg-green-500"></div>
+                </div>
+            </div>
+            @endcan
+
+            @can('view filieres')
+            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">@lang('lang.resources.filieres')</p>
+                        <p class="mt-2 text-3xl font-black text-gray-900">{{ number_format($stats['filieres'] ?? 0) }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">@lang('lang.admin.stats.filieres_unit')</p>
+                    </div>
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50">
+                        <i class="fas fa-graduation-cap text-teal-600"></i>
+                    </span>
+                </div>
+                <div class="mt-4 h-0.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div class="h-0.5 w-4/5 rounded-full bg-teal-500"></div>
+                </div>
+            </div>
+            @endcan
+
+            @can('view enseignants')
+            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">@lang('lang.resources.enseignants')</p>
+                        <p class="mt-2 text-3xl font-black text-gray-900">{{ number_format($stats['enseignants'] ?? 0) }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">@lang('lang.admin.stats.enseignants_unit')</p>
+                    </div>
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50">
+                        <i class="fas fa-chalkboard-teacher text-purple-600"></i>
+                    </span>
+                </div>
+                <div class="mt-4 h-0.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div class="h-0.5 w-2/3 rounded-full bg-purple-500"></div>
+                </div>
+            </div>
+            @endcan
+
+            @can('view etudiants')
+            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">@lang('lang.resources.etudiants')</p>
+                        <p class="mt-2 text-3xl font-black text-gray-900">{{ number_format($stats['etudiants'] ?? 0) }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">@lang('lang.admin.stats.etudiants_unit')</p>
+                    </div>
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+                        <i class="fas fa-user-graduate text-blue-600"></i>
+                    </span>
+                </div>
+                <div class="mt-4 h-0.5 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div class="h-0.5 w-11/12 rounded-full bg-blue-500"></div>
+                </div>
+            </div>
+            @endcan
+
+        </div>
+
+        {{-- ── Content grid ─────────────────────────────────────────── --}}
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+            {{-- Quick access (2/3) --}}
+            <div class="lg:col-span-2">
+                <div class="rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div class="border-b border-gray-100 px-6 py-4">
+                        <h2 class="text-sm font-semibold text-gray-900">
+                            <i class="fas fa-bolt me-2 text-yellow-400"></i>@lang('lang.admin.quick_access')
+                        </h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
+                        @foreach([
+                            ['label'=>'lang.resources.institutions',   'icon'=>'fas fa-university',        'resource'=>'institutions',    'can'=>'view institutions'],
+                            ['label'=>'lang.resources.filieres',       'icon'=>'fas fa-graduation-cap',     'resource'=>'filieres',        'can'=>'view filieres'],
+                            ['label'=>'lang.resources.enseignants',    'icon'=>'fas fa-chalkboard-teacher', 'resource'=>'enseignants',     'can'=>'view enseignants'],
+                            ['label'=>'lang.resources.etudiants',      'icon'=>'fas fa-user-graduate',      'resource'=>'etudiants',       'can'=>'view etudiants'],
+                            ['label'=>'lang.resources.accreditations', 'icon'=>'fas fa-certificate',        'resource'=>'accreditations',  'can'=>'view accreditations'],
+                            ['label'=>'lang.admin.import_export','icon'=>'fas fa-file-arrow-up',      'route'=>'admin.imports.index','can'=>null],
+                        ] as $item)
+                            @if($item['can'] && !auth()->user()->can($item['can'])) @continue @endif
+                            <a href="{{ isset($item['route']) ? route($item['route']) : route('admin.resources.index', $item['resource']) }}"
+                               class="group flex flex-col items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/70 p-4 text-center transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm">
+                                <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-100 transition group-hover:ring-primary/20">
+                                    <i class="{{ $item['icon'] }} text-base text-gray-500 transition group-hover:text-primary"></i>
+                                </span>
+                                <span class="text-xs font-semibold text-gray-600 transition group-hover:text-primary">{{ __($item['label']) }}</span>
+                            </a>
+                        @endforeach
                     </div>
                 </div>
             </div>
-        </div>
-    </aside>
 
-    {{-- ── Main content ── --}}
-    <div style="padding:2rem; overflow-x:auto;">
+            {{-- Activity feed (1/3) --}}
+            @can('view audit-logs')
+            <div class="rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                    <h2 class="text-sm font-semibold text-gray-900">
+                        <i class="fas fa-list-check me-2 text-primary"></i>@lang('lang.admin.recent_activity')
+                    </h2>
+                    <a href="{{ route('admin.audit-logs') }}" class="text-[11px] font-medium text-primary hover:underline">
+                        @lang('lang.admin.view_all') <i class="fas fa-arrow-right ms-1 text-[9px]"></i>
+                    </a>
+                </div>
 
-        {{-- Page header --}}
-        <div class="d-flex justify-between align-center mb-3" style="flex-wrap:wrap; gap:1rem;">
-            <div>
-                <h1 style="font-size:1.5rem; margin-bottom:.2rem;">
-                    {{ __('nav.dashboard') }}
-                </h1>
-                <p class="text-muted" style="font-size:.87rem;">
-                    {{ __('home.hero_subtitle') }}
-                </p>
-            </div>
-            <div class="d-flex gap-1" style="flex-wrap:wrap;">
-                @can('export statistics')
-                <a href="#" class="btn btn-outline btn-sm">
-                    <i class="bi bi-download"></i> Export
-                </a>
-                @endcan
-                <span class="badge badge-success" style="font-size:.78rem; padding:.3rem .75rem;">
-                    {{ now()->translatedFormat('d M Y') }}
-                </span>
-            </div>
-        </div>
-
-        {{-- Stat cards --}}
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:2rem;">
-            @can('view institutions')
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-building"></i></div>
-                <div>
-                    <div class="stat-card-value">{{ $stats['institutions'] ?? 0 }}</div>
-                    <div class="stat-card-label">{{ __('home.stat_institutions') }}</div>
+                <div class="divide-y divide-gray-50 p-2">
+                    @forelse($recentLogs ?? [] as $log)
+                    <div class="flex items-start gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50">
+                        <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full
+                            {{ str_contains($log->description, 'supprim') ? 'bg-red-50' : 'bg-green-50' }}">
+                            <i class="fas {{ str_contains($log->description, 'supprim') ? 'fa-trash text-red-400' : 'fa-check text-green-500' }} text-[10px]"></i>
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-xs font-semibold text-gray-800">{{ $log->causer?->name ?? '—' }}</p>
+                            <p class="text-[11px] text-gray-500">{{ $log->description }}</p>
+                            <p class="mt-0.5 text-[10px] text-gray-400">{{ $log->created_at?->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="py-10 text-center">
+                        <i class="fas fa-inbox mb-2 block text-3xl text-gray-200"></i>
+                        <p class="text-sm text-gray-400">@lang('lang.admin.no_activity')</p>
+                    </div>
+                    @endforelse
                 </div>
             </div>
             @endcan
-            @can('view etudiants')
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-people"></i></div>
-                <div>
-                    <div class="stat-card-value">{{ number_format($stats['etudiants'] ?? 0) }}</div>
-                    <div class="stat-card-label">{{ __('home.stat_etudiants') }}</div>
-                </div>
-            </div>
-            @endcan
-            @can('view filieres')
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-journal-bookmark"></i></div>
-                <div>
-                    <div class="stat-card-value">{{ $stats['filieres'] ?? 0 }}</div>
-                    <div class="stat-card-label">{{ __('home.stat_filieres') }}</div>
-                </div>
-            </div>
-            @endcan
-            @can('view enseignants')
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-person-badge"></i></div>
-                <div>
-                    <div class="stat-card-value">{{ $stats['enseignants'] ?? 0 }}</div>
-                    <div class="stat-card-label">{{ __('home.stat_enseignants') }}</div>
-                </div>
-            </div>
-            @endcan
+
         </div>
 
-        {{-- Recent activity --}}
-        @can('view audit-logs')
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-clock-history"></i>
-                Activité récente
-            </div>
-            <div class="table-wrap" style="border:none; border-radius:0;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Utilisateur</th>
-                            <th>Action</th>
-                            <th>Entité</th>
-                            <th>Date</th>
-                            <th>IP</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($recentLogs ?? [] as $log)
-                        <tr>
-                            <td>{{ $log->user->name ?? '—' }}</td>
-                            <td><span class="badge badge-{{ $log->action === 'delete' ? 'danger' : 'success' }}">{{ $log->action }}</span></td>
-                            <td>{{ $log->entity_type }} #{{ $log->entity_id }}</td>
-                            <td>{{ $log->created_at->diffForHumans() }}</td>
-                            <td style="font-family:monospace;font-size:.8rem;">{{ $log->ip_address }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="text-center text-muted" style="padding:2rem;">
-                                <i class="bi bi-inbox" style="font-size:1.5rem; display:block; margin-bottom:.5rem;"></i>
-                                Aucune activité récente
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        @endcan
-
-    </div>
+    </section>
 </div>
-
 @endsection

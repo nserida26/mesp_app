@@ -182,6 +182,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/imports',      [\App\Http\Controllers\Admin\ImportController::class, 'index'])->name('imports.index');
         Route::post('/imports',     [\App\Http\Controllers\Admin\ImportController::class, 'store'])->name('imports.store');
+        Route::get('/exports/{resource}', [\App\Http\Controllers\Admin\ExportController::class, 'download'])->name('exports.download');
         Route::resource('users',       \App\Http\Controllers\Admin\UserController::class);
         Route::resource('roles',       \App\Http\Controllers\Admin\RoleController::class);
         Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
