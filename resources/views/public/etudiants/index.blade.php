@@ -177,10 +177,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
-                                        {{ $inscription->filiere->institution->nom }}
+                                        {{ $inscription->filiere->institution->nom ?? '—' }}
                                     </div>
                                     <div class="text-xs text-gray-500">
-                                        {{ $inscription->filiere->institution->ville }}
+                                        {{ $inscription->filiere->institution->ville ?? '' }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
