@@ -9,7 +9,9 @@
     <link rel="icon" href="/assets/logo_rim.png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     @stack('styles')
@@ -21,8 +23,10 @@
             <div
                 class="grid min-h-20 grid-cols-1 items-center gap-3 py-4 text-center md:grid-cols-[1fr_auto_1fr] md:text-left">
                 <div class="flex items-center justify-center gap-3 md:justify-start">
-                    <img src="/assets/logo_rim.png" height="45" width="45" alt="Logo Mauritanie" class="h-12 w-12 object-contain">
-                    <img src="/assets/slogan_rim.png" height="45" width="100" alt="Slogan" class="h-12 w-auto object-contain">
+                    <img src="/assets/logo_rim.png" height="45" width="45" alt="Logo Mauritanie"
+                        class="h-12 w-12 object-contain">
+                    <img src="/assets/slogan_rim.png" height="45" width="100" alt="Slogan"
+                        class="h-12 w-auto object-contain">
                 </div>
 
                 <div class="text-center">
@@ -54,14 +58,6 @@
                     class="{{ request()->routeIs('public.verify*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
                     @lang('lang.nav.verify')
                 </a>
-                <a href="{{ route('public.etudiants') }}"
-                    class="{{ request()->routeIs('public.etudiants*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
-                    @lang('lang.nav.students')
-                </a>
-                <a href="{{ route('public.enseignants') }}"
-                    class="{{ request()->routeIs('public.enseignants*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
-                    @lang('lang.teachers_public.title')
-                </a>
                 <a href="{{ route('public.institutions') }}"
                     class="{{ request()->routeIs('public.institutions*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
                     @lang('lang.nav.institutions')
@@ -70,6 +66,15 @@
                     class="{{ request()->routeIs('public.filieres*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
                     @lang('lang.nav.formations')
                 </a>
+                <a href="{{ route('public.etudiants') }}"
+                    class="{{ request()->routeIs('public.etudiants*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
+                    @lang('lang.nav.students')
+                </a>
+                <a href="{{ route('public.enseignants') }}"
+                    class="{{ request()->routeIs('public.enseignants*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
+                    @lang('lang.teachers_public.title')
+                </a>
+
             </nav>
         </div>
     </header>
