@@ -61,7 +61,7 @@ return [
     'public' => [
         'hero_badge' => 'Portail national',
         'hero_title' => "Bienvenue sur la plateforme de l'enseignement supérieur privé",
-        'hero_subtitle' => "Un espace officiel pour vérifier les inscriptions, consulter les institutions accréditées et suivre les formations autorisées.",
+        'hero_subtitle' => "Un espace officiel pour vérifier les inscriptions, consulter les établissements accréditées et suivre les formations autorisées.",
         'quick_verify' => 'Vérification rapide',
         'verify_service_title' => 'Vérifier une inscription',
         'verify_service_description' => "Contrôlez en quelques secondes la validité d'une inscription dans l'enseignement supérieur privé.",
