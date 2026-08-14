@@ -18,6 +18,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/.claude
+/.agents
 
 # Raw source data files containing real personal data (names, national ID numbers)
 /*.xlsx
