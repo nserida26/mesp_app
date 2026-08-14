@@ -56,6 +56,31 @@ Route::prefix('pub')->name('public.')->group(function () {
 
     // Statistiques publiques
     Route::get('/statistiques', [App\Http\Controllers\Public\StatistiqueController::class, 'index'])->name('statistiques');
+
+    // Orientation des candidats (Bac -> Licence, Licence -> Master)
+    Route::prefix('orientation')->name('orientation.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Public\OrientationController::class, 'choixType'])->name('index');
+
+        Route::middleware('throttle:20,1')->group(function () {
+            Route::get('/{type}/postuler', [App\Http\Controllers\Public\OrientationController::class, 'formulaire'])
+                ->whereIn('type', ['bac-licence', 'licence-master'])->name('formulaire');
+            Route::post('/{type}/postuler', [App\Http\Controllers\Public\OrientationController::class, 'soumettreProfil'])
+                ->whereIn('type', ['bac-licence', 'licence-master'])->name('formulaire.store');
+        });
+
+        Route::get('/offres', [App\Http\Controllers\Public\OrientationChoixController::class, 'index'])->name('offres');
+        Route::post('/offres/{offre:uuid}/choisir', [App\Http\Controllers\Public\OrientationChoixController::class, 'ajouter'])->name('offres.choisir');
+        Route::delete('/offres/{offre:uuid}/retirer', [App\Http\Controllers\Public\OrientationChoixController::class, 'retirer'])->name('offres.retirer');
+        Route::post('/offres/reordonner', [App\Http\Controllers\Public\OrientationChoixController::class, 'reordonner'])->name('offres.reordonner');
+        Route::get('/recapitulatif', [App\Http\Controllers\Public\OrientationChoixController::class, 'recapitulatif'])->name('recapitulatif');
+        Route::post('/valider', [App\Http\Controllers\Public\OrientationChoixController::class, 'valider'])->name('valider');
+        Route::get('/confirmation', [App\Http\Controllers\Public\OrientationChoixController::class, 'confirmation'])->name('confirmation');
+
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::get('/suivi', [App\Http\Controllers\Public\OrientationSuiviController::class, 'index'])->name('suivi');
+            Route::post('/suivi', [App\Http\Controllers\Public\OrientationSuiviController::class, 'consulter'])->name('suivi.consulter');
+        });
+    });
 });
 /*
 |--------------------------------------------------------------------------
@@ -180,6 +205,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('orientation')->name('orientation.')->group(function () {
+            Route::resource('campagnes', \App\Http\Controllers\Admin\CampagneOrientationController::class)
+                ->except(['destroy']);
+            Route::post('campagnes/{campagne}/activer', [\App\Http\Controllers\Admin\CampagneOrientationController::class, 'activer'])
+                ->name('campagnes.activer');
+            Route::post('campagnes/{campagne}/fermer', [\App\Http\Controllers\Admin\CampagneOrientationController::class, 'fermer'])
+                ->name('campagnes.fermer');
+            Route::post('campagnes/{campagne}/lancer-affectation', [\App\Http\Controllers\Admin\CampagneOrientationController::class, 'lancerAffectation'])
+                ->name('campagnes.affectation');
+            Route::get('campagnes/{campagne}/resultats', [\App\Http\Controllers\Admin\CampagneOrientationController::class, 'resultats'])
+                ->name('campagnes.resultats');
+            Route::get('campagnes/{campagne}/resultats/export', [\App\Http\Controllers\Admin\CampagneOrientationController::class, 'exportResultats'])
+                ->name('campagnes.resultats.export');
+
+            Route::resource('offres', \App\Http\Controllers\Admin\OffreOrientationController::class)
+                ->except(['show']);
+
+            Route::get('candidats', [\App\Http\Controllers\Admin\CandidatOrientationController::class, 'index'])->name('candidats.index');
+            Route::get('candidats/{candidat}', [\App\Http\Controllers\Admin\CandidatOrientationController::class, 'show'])->name('candidats.show');
+        });
+
         Route::get('/imports',      [\App\Http\Controllers\Admin\ImportController::class, 'index'])->name('imports.index');
         Route::post('/imports',     [\App\Http\Controllers\Admin\ImportController::class, 'store'])->name('imports.store');
         Route::get('/exports/{resource}', [\App\Http\Controllers\Admin\ExportController::class, 'download'])->name('exports.download');

@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Accreditation;
 use App\Models\AffectationEnseignant;
 use App\Models\CalendrierAcademique;
+use App\Models\DomaineLicence;
 use App\Models\Enseignant;
 use App\Models\Etudiant;
 use App\Models\Filiere;
 use App\Models\Inscription;
 use App\Models\Institution;
 use App\Models\Maquette;
+use App\Models\TypeBac;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -194,6 +196,31 @@ class ResourceController extends Controller
                 'debut_vacances_ete' => ['type' => 'date'],
                 'fin_vacances_ete' => ['type' => 'date'],
                 'statut' => ['type' => 'select', 'required' => true, 'options' => ['brouillon' => 'Brouillon', 'valide' => 'Valide', 'publie' => 'Publie']],
+            ],
+        ],
+        'types-bac' => [
+            'model' => TypeBac::class,
+            'label' => 'lang.resources.types_bac',
+            'singular' => 'lang.resources.type_bac',
+            'title' => ['code', 'libelle'],
+            'search' => ['code', 'libelle'],
+            'fields' => [
+                'code' => ['type' => 'text', 'required' => true, 'unique' => true],
+                'libelle' => ['type' => 'text', 'required' => true],
+                'ordre' => ['type' => 'number', 'min' => 0],
+                'statut' => ['type' => 'select', 'required' => true, 'options' => ['actif' => 'Actif', 'inactif' => 'Inactif']],
+            ],
+        ],
+        'domaines-licence' => [
+            'model' => DomaineLicence::class,
+            'label' => 'lang.resources.domaines_licence',
+            'singular' => 'lang.resources.domaine_licence',
+            'title' => ['nom'],
+            'search' => ['nom'],
+            'fields' => [
+                'nom' => ['type' => 'text', 'required' => true, 'unique' => true],
+                'ordre' => ['type' => 'number', 'min' => 0],
+                'statut' => ['type' => 'select', 'required' => true, 'options' => ['actif' => 'Actif', 'inactif' => 'Inactif']],
             ],
         ],
     ];

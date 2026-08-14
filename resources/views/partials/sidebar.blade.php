@@ -15,6 +15,13 @@
             ['resource' => 'accreditations', 'label' => 'lang.resources.accreditations', 'icon' => 'fas fa-certificate', 'route_fallback' => 'accreditations.index'],
             ['resource' => 'calendriers', 'label' => 'lang.resources.calendriers', 'icon' => 'fas fa-calendar-alt', 'route_fallback' => 'calendrier.index'],
         ],
+        'lang.orientation.nav_label' => [
+            ['route' => 'admin.orientation.campagnes.index', 'label' => 'lang.resources.campagnes_orientation', 'icon' => 'fas fa-route', 'match' => 'admin.orientation.campagnes.*', 'adminOnly' => true],
+            ['route' => 'admin.orientation.offres.index', 'label' => 'lang.resources.offres_orientation', 'icon' => 'fas fa-list-check', 'match' => 'admin.orientation.offres.*', 'adminOnly' => true],
+            ['route' => 'admin.orientation.candidats.index', 'label' => 'lang.resources.candidats_orientation', 'icon' => 'fas fa-user-clock', 'match' => 'admin.orientation.candidats.*', 'adminOnly' => true],
+            ['resource' => 'types-bac', 'label' => 'lang.resources.types_bac', 'icon' => 'fas fa-tags', 'adminOnly' => true],
+            ['resource' => 'domaines-licence', 'label' => 'lang.resources.domaines_licence', 'icon' => 'fas fa-tags', 'adminOnly' => true],
+        ],
         'lang.admin.groups.security' => [
             ['route' => 'admin.validations.index', 'label' => 'lang.admin.validations', 'icon' => 'fas fa-check-double', 'match' => 'admin.validations.*'],
             ['route' => 'admin.users.index', 'label' => 'lang.admin.users', 'icon' => 'fas fa-users', 'match' => 'admin.users.*'],
