@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Support\Facades\Crypt;
 
 class Etudiant extends Model
 {
@@ -27,7 +25,13 @@ class Etudiant extends Model
         'annee_bac',
         'mention_bac',
         'email',
-        'telephone'
+        'telephone',
+        'institution_id',
+        'statut_validation',
+        'cree_par_id',
+        'valide_par_id',
+        'valide_le',
+        'motif_rejet',
     ];
 
     protected $hidden = ['numero_national'];
@@ -36,26 +40,12 @@ class Etudiant extends Model
         'date_naissance' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'valide_le' => 'datetime',
     ];
 
-    // Mutator pour crypter automatiquement le numéro national
     public function setNumeroNationalAttribute($value)
     {
-        $this->attributes['numero_national'] = $value ? Crypt::encryptString(trim($value)) : null;
-    }
-
-    // Accesseur pour décrypter
-    public function getNumeroNationalAttribute($value)
-    {
-        if (!$value) {
-            return null;
-        }
-
-        try {
-            return Crypt::decryptString($value);
-        } catch (DecryptException $e) {
-            return $value;
-        }
+        $this->attributes['numero_national'] = $value ? trim($value) : null;
     }
 
     // Mutator pour hasher le numéro de bac
@@ -65,6 +55,58 @@ class Etudiant extends Model
     }
 
     // Relations
+    public function institution()
+    {
+        return $this->belongsTo(Institution::class, 'institution_id', 'id');
+    }
+
+    public function creePar()
+    {
+        return $this->belongsTo(User::class, 'cree_par_id', 'id');
+    }
+
+    public function validePar()
+    {
+        return $this->belongsTo(User::class, 'valide_par_id', 'id');
+    }
+
+    public function scopeEnAttente($query)
+    {
+        return $query->where('statut_validation', 'en_attente');
+    }
+
+    public function scopeValidees($query)
+    {
+        return $query->where('statut_validation', 'valide');
+    }
+
+    public function scopeRejetees($query)
+    {
+        return $query->where('statut_validation', 'rejete');
+    }
+
+    public function getStatutValidationBadgeAttribute()
+    {
+        return match ($this->statut_validation) {
+            'valide' => [
+                'label' => 'Valide',
+                'class' => 'bg-green-100 text-green-800'
+            ],
+            'en_attente' => [
+                'label' => 'En attente',
+                'class' => 'bg-yellow-100 text-yellow-800'
+            ],
+            'rejete' => [
+                'label' => 'Rejete',
+                'class' => 'bg-red-100 text-red-800'
+            ],
+            default => [
+                'label' => $this->statut_validation,
+                'class' => 'bg-gray-100 text-gray-800'
+            ]
+        };
+    }
+
     public function inscriptions()
     {
         return $this->hasMany(Inscription::class, 'etudiant_id', 'id');
@@ -91,12 +133,9 @@ class Etudiant extends Model
 
     public static function verifyByNumeroNational($numeroNational)
     {
-        $numeroNational = trim($numeroNational);
-
-        $etudiant = self::whereNotNull('numero_national')
+        $etudiant = self::where('numero_national', trim($numeroNational))
             ->with(['inscriptionActive.filiere.institution'])
-            ->get()
-            ->first(fn (Etudiant $etudiant) => hash_equals($numeroNational, trim((string) $etudiant->numero_national)));
+            ->first();
 
         return self::verificationResult($etudiant);
     }
@@ -109,10 +148,7 @@ class Etudiant extends Model
             return collect();
         }
 
-        return self::whereNotNull('numero_national')
-            ->get(['uuid', 'numero_national'])
-            ->filter(fn (Etudiant $etudiant) => hash_equals($numeroNational, trim((string) $etudiant->numero_national)))
-            ->pluck('uuid');
+        return self::where('numero_national', $numeroNational)->pluck('uuid');
     }
 
     private static function verificationResult(?Etudiant $etudiant): ?array

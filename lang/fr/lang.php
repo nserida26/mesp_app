@@ -146,7 +146,7 @@ return [
     ],
 
     'verification' => [
-        'title' => "Vérification d'authenticité",
+        'title' => "Vérification",
         'subtitle' => "Vérifiez la validité d'une inscription dans l'enseignement supérieur privé",
         'by_bac' => 'Vérifier par numéro de baccalauréat',
         'bac_number' => 'Numéro de baccalauréat',
@@ -274,6 +274,7 @@ return [
         'registration' => 'Inscription',
         'no_user_found' => 'Aucun utilisateur trouve',
         'audit_logs' => "Journal d'audit",
+        'validations' => 'Validations',
         'no_activity' => 'Aucune activite.',
         'admin_space' => 'Espace administration',
         'system_operational' => 'Systeme operationnel',

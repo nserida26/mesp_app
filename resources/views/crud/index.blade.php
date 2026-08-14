@@ -40,6 +40,13 @@
                             <span class="rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
                                 {{ $item->statut ?? $item->role ?? 'actif' }}
                             </span>
+                            @if (isset($item->statut_validation))
+                                @php $validationBadge = $item->statut_validation_badge; @endphp
+                                <span class="ms-1 rounded-full px-2 py-1 text-xs font-semibold {{ $validationBadge['class'] }}"
+                                      @if ($item->statut_validation === 'rejete' && $item->motif_rejet) title="{{ $item->motif_rejet }}" @endif>
+                                    {{ $validationBadge['label'] }}
+                                </span>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-right">
                             <a class="text-primary hover:text-primary-600" href="{{ route($routeName . '.show', $item) }}">@lang('lang.actions.view')</a>

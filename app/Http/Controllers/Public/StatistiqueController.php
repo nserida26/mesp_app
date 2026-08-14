@@ -15,8 +15,8 @@ class StatistiqueController extends Controller
         return view('public.statistiques.index', [
             'stats' => [
                 'institutions' => Institution::actives()->count(),
-                'filieres' => Filiere::actives()->count(),
-                'etudiants' => Etudiant::count(),
+                'filieres' => Filiere::actives()->where('statut_validation', 'valide')->count(),
+                'etudiants' => Etudiant::where('statut_validation', 'valide')->count(),
                 'inscriptions' => Inscription::actives()->count(),
             ],
         ]);

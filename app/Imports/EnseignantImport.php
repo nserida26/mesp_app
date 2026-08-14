@@ -82,12 +82,12 @@ class EnseignantImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         }
     }
 
-    // Iterate all encrypted records to match NNI
     private function findByNni(string $nni): ?Enseignant
     {
-        return Enseignant::whereNotNull('numero_national')
-            ->get()
-            ->first(fn ($e) => hash_equals($nni, trim((string) $e->numero_national)));
+        if ($nni === '') {
+            return null;
+        }
+        return Enseignant::where('numero_national', $nni)->first();
     }
 
     public function headingRow(): int

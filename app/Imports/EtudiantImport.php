@@ -25,7 +25,7 @@ class EtudiantImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 continue;
             }
 
-            // ── Find or create étudiant by NNI (encrypted) ──────────────
+            // ── Find or create étudiant by NNI ──────────────────────────
             $etudiant = $this->findByNni($nni);
 
             if (!$etudiant) {
@@ -74,15 +74,12 @@ class EtudiantImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         }
     }
 
-    // Iterate all encrypted records to match NNI
     private function findByNni(string $nni): ?Etudiant
     {
         if ($nni === '') {
             return null;
         }
-        return Etudiant::whereNotNull('numero_national')
-            ->get()
-            ->first(fn ($e) => hash_equals($nni, trim((string) $e->numero_national)));
+        return Etudiant::where('numero_national', $nni)->first();
     }
 
     private function parseDate($value): ?string

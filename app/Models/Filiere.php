@@ -24,12 +24,18 @@ class Filiere extends Model
         'capacite_accueil',
         'statut',
         'accreditation_id',
+        'statut_validation',
+        'cree_par_id',
+        'valide_par_id',
+        'valide_le',
+        'motif_rejet',
     ];
 
     protected $casts = [
         'date_arrete_autorisation' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'valide_le' => 'datetime',
     ];
 
     // Relations
@@ -41,6 +47,16 @@ class Filiere extends Model
     public function institution()
     {
         return $this->belongsTo(Institution::class, 'institution_id', 'id');
+    }
+
+    public function creePar()
+    {
+        return $this->belongsTo(User::class, 'cree_par_id', 'id');
+    }
+
+    public function validePar()
+    {
+        return $this->belongsTo(User::class, 'valide_par_id', 'id');
     }
 
     public function inscriptions()
@@ -79,6 +95,21 @@ class Filiere extends Model
     public function scopeParInstitution($query, $institutionId)
     {
         return $query->where('institution_id', $institutionId);
+    }
+
+    public function scopeEnAttente($query)
+    {
+        return $query->where('statut_validation', 'en_attente');
+    }
+
+    public function scopeValidees($query)
+    {
+        return $query->where('statut_validation', 'valide');
+    }
+
+    public function scopeRejetees($query)
+    {
+        return $query->where('statut_validation', 'rejete');
     }
 
     // Accesseurs
@@ -127,6 +158,28 @@ class Filiere extends Model
             ],
             default => [
                 'label' => $this->statut,
+                'class' => 'bg-gray-100 text-gray-800'
+            ]
+        };
+    }
+
+    public function getStatutValidationBadgeAttribute()
+    {
+        return match ($this->statut_validation) {
+            'valide' => [
+                'label' => 'Valide',
+                'class' => 'bg-green-100 text-green-800'
+            ],
+            'en_attente' => [
+                'label' => 'En attente',
+                'class' => 'bg-yellow-100 text-yellow-800'
+            ],
+            'rejete' => [
+                'label' => 'Rejete',
+                'class' => 'bg-red-100 text-red-800'
+            ],
+            default => [
+                'label' => $this->statut_validation,
                 'class' => 'bg-gray-100 text-gray-800'
             ]
         };

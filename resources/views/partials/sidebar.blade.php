@@ -5,23 +5,26 @@
             ['route' => 'admin.imports.index', 'label' => 'lang.admin.import_export', 'icon' => 'fas fa-file-arrow-up', 'match' => 'admin.imports.*'],
         ],
         'lang.admin.groups.data' => [
-            ['resource' => 'institutions', 'label' => 'lang.resources.institutions', 'icon' => 'fas fa-university'],
-            ['resource' => 'filieres', 'label' => 'lang.resources.filieres', 'icon' => 'fas fa-graduation-cap'],
-            ['resource' => 'maquettes', 'label' => 'lang.resources.maquettes', 'icon' => 'fas fa-layer-group'],
-            ['resource' => 'etudiants', 'label' => 'lang.resources.etudiants', 'icon' => 'fas fa-user-graduate'],
-            ['resource' => 'inscriptions', 'label' => 'lang.resources.inscriptions', 'icon' => 'fas fa-id-card'],
-            ['resource' => 'enseignants', 'label' => 'lang.resources.enseignants', 'icon' => 'fas fa-chalkboard-teacher'],
-            ['resource' => 'affectations', 'label' => 'lang.resources.affectations', 'icon' => 'fas fa-people-arrows'],
-            ['resource' => 'accreditations', 'label' => 'lang.resources.accreditations', 'icon' => 'fas fa-certificate'],
-            ['resource' => 'calendriers', 'label' => 'lang.resources.calendriers', 'icon' => 'fas fa-calendar-alt'],
+            ['resource' => 'institutions', 'label' => 'lang.resources.institutions', 'icon' => 'fas fa-university', 'route_fallback' => 'institutions.index'],
+            ['resource' => 'filieres', 'label' => 'lang.resources.filieres', 'icon' => 'fas fa-graduation-cap', 'route_fallback' => 'filieres.index'],
+            ['resource' => 'maquettes', 'label' => 'lang.resources.maquettes', 'icon' => 'fas fa-layer-group', 'adminOnly' => true],
+            ['resource' => 'etudiants', 'label' => 'lang.resources.etudiants', 'icon' => 'fas fa-user-graduate', 'route_fallback' => 'etudiants.index'],
+            ['resource' => 'inscriptions', 'label' => 'lang.resources.inscriptions', 'icon' => 'fas fa-id-card', 'adminOnly' => true],
+            ['resource' => 'enseignants', 'label' => 'lang.resources.enseignants', 'icon' => 'fas fa-chalkboard-teacher', 'route_fallback' => 'enseignants.index'],
+            ['resource' => 'affectations', 'label' => 'lang.resources.affectations', 'icon' => 'fas fa-people-arrows', 'adminOnly' => true],
+            ['resource' => 'accreditations', 'label' => 'lang.resources.accreditations', 'icon' => 'fas fa-certificate', 'route_fallback' => 'accreditations.index'],
+            ['resource' => 'calendriers', 'label' => 'lang.resources.calendriers', 'icon' => 'fas fa-calendar-alt', 'route_fallback' => 'calendrier.index'],
         ],
         'lang.admin.groups.security' => [
+            ['route' => 'admin.validations.index', 'label' => 'lang.admin.validations', 'icon' => 'fas fa-check-double', 'match' => 'admin.validations.*'],
             ['route' => 'admin.users.index', 'label' => 'lang.admin.users', 'icon' => 'fas fa-users', 'match' => 'admin.users.*'],
             ['route' => 'admin.roles.index', 'label' => 'lang.admin.roles', 'icon' => 'fas fa-shield-alt', 'match' => 'admin.roles.*'],
             ['route' => 'admin.permissions.index', 'label' => 'lang.admin.permissions', 'icon' => 'fas fa-key', 'match' => 'admin.permissions.*'],
             ['route' => 'admin.audit-logs', 'label' => 'lang.admin.audit_logs', 'icon' => 'fas fa-list-check', 'match' => 'admin.audit-logs'],
         ],
     ];
+
+    $isAdmin = auth()->user()->hasRole('admin');
 @endphp
 
 <aside class="w-full shrink-0 border-b border-gray-100 bg-white/95 md:sticky md:top-20 md:h-[calc(100vh-5rem)] md:w-72 md:overflow-y-auto md:border-b-0 md:border-e md:border-gray-100">
@@ -46,10 +49,16 @@
 
                 <div class="space-y-1">
                     @foreach ($items as $item)
+                        @continue (isset($item['resource']) && !$isAdmin && ($item['adminOnly'] ?? false))
                         @php
                             if (isset($item['resource'])) {
-                                $isActive = request()->route('resource') === $item['resource'];
-                                $href = route('admin.resources.index', $item['resource']);
+                                if (!$isAdmin && isset($item['route_fallback'])) {
+                                    $isActive = request()->routeIs(str($item['route_fallback'])->before('.') . '.*');
+                                    $href = route($item['route_fallback']);
+                                } else {
+                                    $isActive = request()->route('resource') === $item['resource'];
+                                    $href = route('admin.resources.index', $item['resource']);
+                                }
                             } else {
                                 $isActive = request()->routeIs($item['match'] ?? $item['route']);
                                 $href = route($item['route']);

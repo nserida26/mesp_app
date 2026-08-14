@@ -16,6 +16,7 @@ class FiliereController extends Controller
             ->with(['institution'])
             ->withCount(['inscriptionsActives'])
             ->where('statut', 'active')
+            ->where('statut_validation', 'valide')
             ->whereHas('institution', function ($q) {
                 $q->where('statut', 'actif')
                     ->whereHas('accreditationActive');
@@ -48,9 +49,9 @@ class FiliereController extends Controller
 
         // Statistiques
         $stats = [
-            'total_filieres' => Filiere::where('statut', 'active')->count(),
+            'total_filieres' => Filiere::where('statut', 'active')->where('statut_validation', 'valide')->count(),
             'total_institutions' => Institution::actives()->count(),
-            'capacite_totale' => Filiere::where('statut', 'active')->sum('capacite_accueil'),
+            'capacite_totale' => Filiere::where('statut', 'active')->where('statut_validation', 'valide')->sum('capacite_accueil'),
             'etudiants_inscrits' => Inscription::where('statut', 'actif')->count(),
         ];
 
@@ -77,6 +78,7 @@ class FiliereController extends Controller
             ->with(['institution'])
             ->withCount(['inscriptionsActives'])
             ->where('statut', 'active')
+            ->where('statut_validation', 'valide')
             ->firstOrFail();
 
         // Récupérer les statistiques par semestre (anonymisées)

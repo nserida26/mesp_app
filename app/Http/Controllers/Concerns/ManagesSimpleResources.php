@@ -8,7 +8,7 @@ trait ManagesSimpleResources
 {
     public function index(Request $request)
     {
-        $query = ($this->modelClass)::query()->with($this->with);
+        $query = $this->scopeForUser(($this->modelClass)::query()->with($this->with));
 
         if ($request->filled('search') && $this->searchable) {
             $query->where(function ($builder) use ($request) {
@@ -29,17 +29,17 @@ trait ManagesSimpleResources
 
     public function create()
     {
-        return view('crud.form', [
+        return view('crud.form', array_merge([
             'item' => null,
             'resourceName' => $this->resourceName,
             'routeName' => $this->routeName(),
             'fields' => array_keys($this->validationRules),
-        ]);
+        ], $this->formExtras()));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->validationRules);
+        $validated = $this->applyCreationDefaults($request->validate($this->validationRules));
         ($this->modelClass)::create($validated);
 
         return redirect()->route($this->routeName() . '.index')
@@ -61,18 +61,20 @@ trait ManagesSimpleResources
     {
         $item = $this->findModel($id);
 
-        return view('crud.form', [
+        return view('crud.form', array_merge([
             'item' => $item,
             'resourceName' => $this->resourceName,
             'routeName' => $this->routeName(),
             'fields' => array_keys($this->validationRules),
-        ]);
+        ], $this->formExtras()));
     }
 
     public function update(Request $request, $id)
     {
         $item = $this->findModel($id);
-        $item->update($request->validate($this->validationRules));
+        $this->guardEditable($item);
+        $validated = $this->applyUpdateDefaults($request->validate($this->validationRules), $item);
+        $item->update($validated);
 
         return redirect()->route($this->routeName() . '.index')
             ->with('success', "{$this->resourceName} mis a jour.");
@@ -88,14 +90,39 @@ trait ManagesSimpleResources
 
     protected function findModel($id)
     {
-        return ($this->modelClass)::query()
+        $query = $this->scopeForUser(($this->modelClass)::query())
             ->where('uuid', $id)
-            ->orWhere('id', $id)
-            ->firstOrFail();
+            ->orWhere('id', $id);
+
+        return $query->firstOrFail();
     }
 
     protected function routeName(): string
     {
         return str($this->resourceName)->lower()->ascii()->plural()->toString();
+    }
+
+    protected function scopeForUser($query)
+    {
+        return $query;
+    }
+
+    protected function applyCreationDefaults(array $validated): array
+    {
+        return $validated;
+    }
+
+    protected function applyUpdateDefaults(array $validated, $item): array
+    {
+        return $validated;
+    }
+
+    protected function guardEditable($item): void
+    {
+    }
+
+    protected function formExtras(): array
+    {
+        return [];
     }
 }

@@ -26,7 +26,7 @@ class EtudiantExport implements FromCollection, WithHeadings, WithEvents, Should
             // ── Étudiant ──────────────────────────────────────────────────
             $ins->etudiant?->nom                ?? '',
             $ins->etudiant?->prenom             ?? '',
-            $ins->etudiant?->numero_national    ?? '',   // décrypté via accessor
+            $ins->etudiant?->numero_national    ?? '',
             $ins->etudiant?->date_naissance?->format('d/m/Y') ?? '',
             $ins->etudiant?->lieu_naissance     ?? '',
             $ins->etudiant?->serie_bac          ?? '',

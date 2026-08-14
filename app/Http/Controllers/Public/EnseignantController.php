@@ -13,7 +13,8 @@ class EnseignantController extends Controller
     {
         $query = Enseignant::query()
             ->with(['affectationsActuelles.institution', 'affectationsActuelles.filiere'])
-            ->actifs();
+            ->actifs()
+            ->where('statut_validation', 'valide');
 
         if ($request->filled('q')) {
             $term = $request->q;

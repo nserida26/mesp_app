@@ -14,7 +14,13 @@ class EtudiantController extends Controller
     {
         $query = Inscription::query()
             ->with(['filiere.institution'])
-            ->where('statut', 'actif');
+            ->where('statut', 'actif')
+            ->whereHas('etudiant', function ($q) {
+                $q->where('statut_validation', 'valide');
+            })
+            ->whereHas('filiere', function ($q) {
+                $q->where('statut_validation', 'valide');
+            });
 
         // Filtres
         if ($request->filled('niveau')) {
@@ -39,18 +45,16 @@ class EtudiantController extends Controller
             $query->where('annee_universitaire', $request->annee);
         }
 
-        // Statistiques globales (anonymisées)
+        // Statistiques globales (anonymisées, uniquement donnees validees)
+        $baseStats = Inscription::where('statut', 'actif')
+            ->whereHas('etudiant', fn($q) => $q->where('statut_validation', 'valide'))
+            ->whereHas('filiere', fn($q) => $q->where('statut_validation', 'valide'));
+
         $stats = [
-            'total_actifs' => Inscription::where('statut', 'actif')->count(),
-            'total_licence' => Inscription::where('statut', 'actif')
-                ->whereHas('filiere', fn($q) => $q->where('niveau', 'licence'))
-                ->count(),
-            'total_master' => Inscription::where('statut', 'actif')
-                ->whereHas('filiere', fn($q) => $q->where('niveau', 'master'))
-                ->count(),
-            'total_doctorat' => Inscription::where('statut', 'actif')
-                ->whereHas('filiere', fn($q) => $q->where('niveau', 'doctorat'))
-                ->count(),
+            'total_actifs' => $baseStats->clone()->count(),
+            'total_licence' => $baseStats->clone()->whereHas('filiere', fn($q) => $q->where('niveau', 'licence'))->count(),
+            'total_master' => $baseStats->clone()->whereHas('filiere', fn($q) => $q->where('niveau', 'master'))->count(),
+            'total_doctorat' => $baseStats->clone()->whereHas('filiere', fn($q) => $q->where('niveau', 'doctorat'))->count(),
         ];
 
         // Récupération paginée (données anonymisées)

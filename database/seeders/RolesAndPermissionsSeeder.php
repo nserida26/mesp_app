@@ -30,6 +30,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'create filieres',
             'edit filieres',
             'delete filieres',
+            'validate filieres',
 
             // Étudiants
             'view etudiants',
@@ -38,12 +39,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete etudiants',
             'export etudiants',
             'verify etudiants',         // public verification endpoint
+            'validate etudiants',
 
             // Enseignants
             'view enseignants',
             'create enseignants',
             'edit enseignants',
             'delete enseignants',
+            'validate enseignants',
 
             // Accréditations
             'view accreditations',

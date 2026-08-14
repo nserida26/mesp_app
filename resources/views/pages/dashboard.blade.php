@@ -101,6 +101,36 @@
             </div>
             @endcan
 
+            @if (isset($stats['a_valider']))
+            <a href="{{ route('admin.validations.index') }}" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">A valider</p>
+                        <p class="mt-2 text-3xl font-black text-gray-900">{{ number_format($stats['a_valider']) }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">soumissions en attente</p>
+                    </div>
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-50">
+                        <i class="fas fa-check-double text-yellow-600"></i>
+                    </span>
+                </div>
+            </a>
+            @endif
+
+            @if (isset($stats['en_attente']))
+            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">En attente</p>
+                        <p class="mt-2 text-3xl font-black text-gray-900">{{ number_format($stats['en_attente']) }}</p>
+                        <p class="mt-0.5 text-xs text-gray-400">de vos soumissions</p>
+                    </div>
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-50">
+                        <i class="fas fa-hourglass-half text-yellow-600"></i>
+                    </span>
+                </div>
+            </div>
+            @endif
+
         </div>
 
         {{-- ── Content grid ─────────────────────────────────────────── --}}
@@ -115,16 +145,24 @@
                         </h2>
                     </div>
                     <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
+                        @php $isAdmin = auth()->user()->hasRole('admin'); @endphp
                         @foreach([
-                            ['label'=>'lang.resources.institutions',   'icon'=>'fas fa-university',        'resource'=>'institutions',    'can'=>'view institutions'],
-                            ['label'=>'lang.resources.filieres',       'icon'=>'fas fa-graduation-cap',     'resource'=>'filieres',        'can'=>'view filieres'],
-                            ['label'=>'lang.resources.enseignants',    'icon'=>'fas fa-chalkboard-teacher', 'resource'=>'enseignants',     'can'=>'view enseignants'],
-                            ['label'=>'lang.resources.etudiants',      'icon'=>'fas fa-user-graduate',      'resource'=>'etudiants',       'can'=>'view etudiants'],
-                            ['label'=>'lang.resources.accreditations', 'icon'=>'fas fa-certificate',        'resource'=>'accreditations',  'can'=>'view accreditations'],
+                            ['label'=>'lang.resources.institutions',   'icon'=>'fas fa-university',        'resource'=>'institutions',    'can'=>'view institutions',    'route_fallback'=>'institutions.index'],
+                            ['label'=>'lang.resources.filieres',       'icon'=>'fas fa-graduation-cap',     'resource'=>'filieres',        'can'=>'view filieres',        'route_fallback'=>'filieres.index'],
+                            ['label'=>'lang.resources.enseignants',    'icon'=>'fas fa-chalkboard-teacher', 'resource'=>'enseignants',     'can'=>'view enseignants',     'route_fallback'=>'enseignants.index'],
+                            ['label'=>'lang.resources.etudiants',      'icon'=>'fas fa-user-graduate',      'resource'=>'etudiants',       'can'=>'view etudiants',       'route_fallback'=>'etudiants.index'],
+                            ['label'=>'lang.resources.accreditations', 'icon'=>'fas fa-certificate',        'resource'=>'accreditations',  'can'=>'view accreditations',  'route_fallback'=>'accreditations.index'],
                             ['label'=>'lang.admin.import_export','icon'=>'fas fa-file-arrow-up',      'route'=>'admin.imports.index','can'=>null],
                         ] as $item)
                             @if($item['can'] && !auth()->user()->can($item['can'])) @continue @endif
-                            <a href="{{ isset($item['route']) ? route($item['route']) : route('admin.resources.index', $item['resource']) }}"
+                            @php
+                                $href = isset($item['route'])
+                                    ? route($item['route'])
+                                    : ((!$isAdmin && isset($item['route_fallback']))
+                                        ? route($item['route_fallback'])
+                                        : route('admin.resources.index', $item['resource']));
+                            @endphp
+                            <a href="{{ $href }}"
                                class="group flex flex-col items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50/70 p-4 text-center transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm">
                                 <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-100 transition group-hover:ring-primary/20">
                                     <i class="{{ $item['icon'] }} text-base text-gray-500 transition group-hover:text-primary"></i>

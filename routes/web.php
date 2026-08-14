@@ -189,6 +189,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/audit-logs',      [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])
             ->middleware('can:view audit-logs')
             ->name('audit-logs');
+        Route::get('/validations', [\App\Http\Controllers\Admin\ValidationController::class, 'index'])->name('validations.index');
+        Route::post('/validations/{type}/{uuid}/approve', [\App\Http\Controllers\Admin\ValidationController::class, 'approve'])
+            ->whereIn('type', ['enseignants', 'etudiants', 'filieres'])
+            ->name('validations.approve');
+        Route::post('/validations/{type}/{uuid}/reject', [\App\Http\Controllers\Admin\ValidationController::class, 'reject'])
+            ->whereIn('type', ['enseignants', 'etudiants', 'filieres'])
+            ->name('validations.reject');
         Route::get('/{resource}', [\App\Http\Controllers\Admin\ResourceController::class, 'index'])->name('resources.index');
         Route::get('/{resource}/create', [\App\Http\Controllers\Admin\ResourceController::class, 'create'])->name('resources.create');
         Route::post('/{resource}', [\App\Http\Controllers\Admin\ResourceController::class, 'store'])->name('resources.store');

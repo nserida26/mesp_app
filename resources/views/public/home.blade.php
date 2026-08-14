@@ -44,7 +44,8 @@
                             </button>
                         </div>
                         <div class="mt-3 grid gap-2 sm:grid-cols-[auto_1fr] sm:items-center">
-                            <div class="rounded-xl bg-gray-100 px-4 py-3 text-center font-mono text-sm font-bold text-gray-800">
+                            <div
+                                class="rounded-xl bg-gray-100 px-4 py-3 text-center font-mono text-sm font-bold text-gray-800">
                                 {{ $captcha }}
                             </div>
                             <input type="text" name="captcha" maxlength="6" placeholder="@lang('lang.verification.copy_code')"
@@ -109,7 +110,8 @@
                         <span class="block text-lg font-bold text-gray-900">@lang('lang.public.verify_service_title')</span>
                         <span class="mt-2 block text-sm leading-relaxed text-gray-500">@lang('lang.public.verify_service_description')</span>
                     </span>
-                    <span class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
+                    <span
+                        class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
                         @lang('lang.nav.verify')
                         <i class="fas fa-arrow-right text-xs"></i>
                     </span>
@@ -124,7 +126,8 @@
                         <span class="block text-lg font-bold text-gray-900">@lang('lang.nav.institutions')</span>
                         <span class="mt-2 block text-sm leading-relaxed text-gray-500">@lang('lang.public.institutions_service_description')</span>
                     </span>
-                    <span class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
+                    <span
+                        class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
                         @lang('lang.actions.view')
                         <i class="fas fa-arrow-right text-xs"></i>
                     </span>
@@ -139,7 +142,8 @@
                         <span class="block text-lg font-bold text-gray-900">@lang('lang.nav.formations')</span>
                         <span class="mt-2 block text-sm leading-relaxed text-gray-500">@lang('lang.public.formations_service_description')</span>
                     </span>
-                    <span class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
+                    <span
+                        class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
                         @lang('lang.actions.details')
                         <i class="fas fa-arrow-right text-xs"></i>
                     </span>
@@ -154,7 +158,8 @@
                         <span class="block text-lg font-bold text-gray-900">@lang('lang.nav.students')</span>
                         <span class="mt-2 block text-sm leading-relaxed text-gray-500">@lang('lang.public.students_service_description')</span>
                     </span>
-                    <span class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
+                    <span
+                        class="mt-auto inline-flex items-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-700 transition group-hover:bg-green-700 group-hover:text-white">
                         @lang('lang.actions.view')
                         <i class="fas fa-arrow-right text-xs"></i>
                     </span>
@@ -169,7 +174,8 @@
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($institutions_recentes as $institution)
-                    <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md">
+                    <div
+                        class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md">
                         <div class="p-6">
                             <div class="mb-4 flex items-center">
                                 @if ($institution->logo_path)

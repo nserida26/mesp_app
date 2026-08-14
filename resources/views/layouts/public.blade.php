@@ -66,6 +66,7 @@
                     class="{{ request()->routeIs('public.filieres*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
                     @lang('lang.nav.formations')
                 </a>
+
                 <a href="{{ route('public.etudiants') }}"
                     class="{{ request()->routeIs('public.etudiants*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
                     @lang('lang.nav.students')
@@ -74,6 +75,8 @@
                     class="{{ request()->routeIs('public.enseignants*') ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' }} inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition">
                     @lang('lang.teachers_public.title')
                 </a>
+
+
 
             </nav>
         </div>

@@ -27,7 +27,7 @@ class EnseignantExport implements FromCollection, WithHeadings, WithEvents, Shou
             // ── Enseignant ────────────────────────────────────────────────
             $aff->enseignant?->nom                  ?? '',
             $aff->enseignant?->prenom               ?? '',
-            $aff->enseignant?->numero_national      ?? '',   // décrypté via accessor
+            $aff->enseignant?->numero_national      ?? '',
             $aff->enseignant?->numero_accreditation ?? '',
             $aff->enseignant?->grade                ?? '',
             $aff->enseignant?->specialite           ?? '',

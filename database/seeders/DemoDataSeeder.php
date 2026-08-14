@@ -8,6 +8,7 @@ use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\Inscription;
 use App\Models\User;
+use Database\Seeders\Support\RealStudentImporter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,9 +16,51 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class DemoDataSeeder extends Seeder
 {
+    private const ANNEE_UNIVERSITAIRE = 2026;
+
     public function run(): void
     {
-        $institutions = collect([
+        $institutions = $this->seedInstitutions();
+        $studentsByInstitution = (new RealStudentImporter())->all();
+
+        $filieres = collect();
+        foreach ($studentsByInstitution as $code => $records) {
+            if (!isset($institutions[$code]) || empty($records)) continue;
+
+            $filieres = $filieres->merge(
+                $this->seedFilieresForInstitution($institutions[$code], $records)
+            );
+        }
+
+        foreach ($studentsByInstitution as $code => $records) {
+            if (!isset($institutions[$code])) continue;
+
+            $this->seedStudents($code, $institutions[$code], $records, $filieres);
+        }
+
+        $institutions->each(fn (Institution $institution) => $this->seedAccreditationEtCalendrier($institution));
+
+        $enseignants = $this->seedEnseignants();
+        $this->seedAffectations($enseignants, $filieres);
+
+        $this->seedUsers($institutions);
+        $this->seedActivityLog();
+        $this->seedPersonalAccessToken();
+
+        $this->command?->info(sprintf(
+            'Demo data seeded: %d institutions, %d filieres, %d etudiants.',
+            $institutions->count(),
+            $filieres->count(),
+            Etudiant::count()
+        ));
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<string, Institution> keyed by code_etablissement
+     */
+    private function seedInstitutions(): \Illuminate\Support\Collection
+    {
+        return collect([
             [
                 'nom' => 'Universite Libanaise Internationale en Mauritanie',
                 'code_etablissement' => 'LIU',
@@ -37,98 +80,192 @@ class DemoDataSeeder extends Seeder
                 'statut' => 'actif',
             ],
             [
-                'nom' => 'Universite Chinguetti Moderne',
-                'code_etablissement' => 'UCM',
-                'adresse' => 'Ksar',
+                'nom' => "GEU l'Academie",
+                'code_etablissement' => 'GEU',
+                'adresse' => null,
                 'ville' => 'Nouakchott',
-                'telephone' => '+222 45 25 60 60',
-                'email' => 'contact@ucm.mr',
+                'telephone' => null,
+                'email' => 'contact@geu.mr',
                 'statut' => 'actif',
             ],
-        ])->map(function (array $data) {
-            Institution::updateOrCreate(
-                ['code_etablissement' => $data['code_etablissement']],
-                $data
-            );
+            [
+                'nom' => "Institut Superieur d'Informatique",
+                'code_etablissement' => 'ISI',
+                'adresse' => null,
+                'ville' => 'Nouakchott',
+                'telephone' => null,
+                'email' => 'contact@isi.mr',
+                'statut' => 'actif',
+            ],
+            [
+                'nom' => 'International School of Business',
+                'code_etablissement' => 'ISB',
+                'adresse' => null,
+                'ville' => 'Nouakchott',
+                'telephone' => null,
+                'email' => 'contact@isb.mr',
+                'statut' => 'actif',
+            ],
+            [
+                'nom' => 'Student Edge Mauritania',
+                'code_etablissement' => 'EDGE',
+                'adresse' => null,
+                'ville' => 'Nouakchott',
+                'telephone' => null,
+                'email' => 'contact@edge.mr',
+                'statut' => 'actif',
+            ],
+        ])->mapWithKeys(function (array $data) {
+            Institution::updateOrCreate(['code_etablissement' => $data['code_etablissement']], $data);
 
-            return Institution::where('code_etablissement', $data['code_etablissement'])->firstOrFail();
+            return [$data['code_etablissement'] => Institution::where('code_etablissement', $data['code_etablissement'])->firstOrFail()];
         });
+    }
 
-        Institution::whereIn('code_etablissement', ['UNA', 'ISN', 'ENSN'])
-            ->update(['statut' => 'inactif']);
+    /**
+     * @param array<int, array> $records
+     * @return \Illuminate\Support\Collection<int, Filiere>
+     */
+    private function seedFilieresForInstitution(Institution $institution, array $records): \Illuminate\Support\Collection
+    {
+        $groups = collect($records)->groupBy('filiere_nom');
+        $usedCodes = [];
 
-        $filieres = collect([
-            ['institution' => 'LIU', 'code_filiere' => 'LIU-LIC-GEST', 'nom' => 'Licence en Gestion des Entreprises', 'niveau' => 'licence', 'duree_semestres' => 6, 'capacite_accueil' => 90],
-            ['institution' => 'LIU', 'code_filiere' => 'LIU-LIC-INFO', 'nom' => 'Licence en Informatique de Gestion', 'niveau' => 'licence', 'duree_semestres' => 6, 'capacite_accueil' => 80],
-            ['institution' => 'SUPM', 'code_filiere' => 'SUPM-LIC-MGT', 'nom' => 'Licence en Management', 'niveau' => 'licence', 'duree_semestres' => 6, 'capacite_accueil' => 100],
-            ['institution' => 'SUPM', 'code_filiere' => 'SUPM-MAS-FIN', 'nom' => 'Master Finance et Controle de Gestion', 'niveau' => 'master', 'duree_semestres' => 4, 'capacite_accueil' => 45],
-            ['institution' => 'UCM', 'code_filiere' => 'UCM-LIC-DROIT', 'nom' => 'Licence en Droit des Affaires', 'niveau' => 'licence', 'duree_semestres' => 6, 'capacite_accueil' => 70],
-        ])->map(function (array $data) {
-            $institution = Institution::where('code_etablissement', $data['institution'])->firstOrFail();
-            unset($data['institution']);
+        return $groups->map(function ($groupRecords, string $filiereNom) use ($institution, &$usedCodes) {
+            $niveau = $groupRecords->first()['filiere_niveau'];
+            $effectif = $groupRecords->count();
+
+            $baseCode = strtoupper($institution->code_etablissement) . '-'
+                . ($niveau === 'master' ? 'MAS' : 'LIC') . '-'
+                . strtoupper(Str::slug($filiereNom, ''));
+            $baseCode = substr($baseCode, 0, 45);
+
+            $code = $baseCode;
+            $suffix = 2;
+            while (in_array($code, $usedCodes, true)) {
+                $code = substr($baseCode, 0, 42) . $suffix;
+                $suffix++;
+            }
+            $usedCodes[] = $code;
 
             Filiere::updateOrCreate(
-                ['code_filiere' => $data['code_filiere']],
-                $data + [
+                ['code_filiere' => $code],
+                [
                     'institution_id' => $institution->id,
-                    'numero_arrete_autorisation' => 'AUT-' . date('Y') . '-' . $data['code_filiere'],
+                    'nom' => $filiereNom,
+                    'niveau' => $niveau,
+                    'duree_semestres' => $niveau === 'master' ? 4 : 6,
+                    'numero_arrete_autorisation' => 'AUT-' . date('Y') . '-' . $code,
                     'date_arrete_autorisation' => '2025-09-01',
+                    'capacite_accueil' => (int) ceil($effectif * 1.3),
                     'statut' => 'active',
                 ]
             );
 
-            return Filiere::where('code_filiere', $data['code_filiere'])->firstOrFail();
-        });
+            return Filiere::where('code_filiere', $code)->firstOrFail();
+        })->values();
+    }
 
-        Filiere::whereIn('code_filiere', [
-            'UNA-LIC-DROIT',
-            'UNA-MAS-ECO',
-            'ISN-LIC-GL',
-            'ISN-MAS-CYB',
-            'ENSN-LIC-MATH',
-        ])->update(['statut' => 'inactive']);
+    /**
+     * @param array<int, array> $records
+     * @param \Illuminate\Support\Collection<int, Filiere> $filieres
+     */
+    private function seedStudents(string $institutionCode, Institution $institution, array $records, \Illuminate\Support\Collection $filieres): void
+    {
+        $filieresByNom = $filieres->where('institution_id', $institution->id)->keyBy('nom');
 
-        $institutions->each(function (Institution $institution, int $index) {
-            DB::table('accreditations')->updateOrInsert(
-                ['numero_arrete' => 'ACC-2025-' . $institution->code_etablissement],
+        foreach ($records as $index => $record) {
+            $filiere = $filieresByNom->get($record['filiere_nom']);
+            if (!$filiere) continue;
+
+            $bacKey = $institutionCode . '|' . ($record['numero_bac'] ?: $record['numero_national'] ?: "ROW{$index}");
+
+            $etudiant = Etudiant::updateOrCreate(
+                ['hash_numero_bac' => hash('sha256', $bacKey)],
                 [
-                    'uuid' => (string) Str::uuid(),
-                    'institution_id' => $institution->id,
-                    'date_arrete' => '2025-07-15',
-                    'date_debut' => '2025-09-01',
-                    'date_fin' => '2030-08-31',
-                    'type' => $index === 0 ? 'renouvellement' : 'creation',
-                    'statut' => 'active',
-                    'fichier_arrete_path' => 'arretes/' . strtolower($institution->code_etablissement) . '-2025.pdf',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'nom' => $record['nom'],
+                    'prenom' => $record['prenom'],
+                    'date_naissance' => $record['date_naissance'],
+                    'lieu_naissance' => null,
+                    'numero_national' => $record['numero_national'],
+                    'hash_numero_bac' => $bacKey,
+                    'serie_bac' => $record['serie_bac'],
+                    'annee_bac' => $record['annee_bac'],
+                    'mention_bac' => null,
+                    'email' => null,
+                    'telephone' => null,
                 ]
             );
 
-            DB::table('calendriers_academiques')->updateOrInsert(
-                ['institution_id' => $institution->id, 'annee_universitaire' => 2026],
+            // Etudiant is keyed by non-incrementing uuid, so updateOrCreate() never
+            // fetches the auto-increment `id` back for newly-created rows; reload it.
+            $etudiant->refresh();
+
+            Inscription::where('etudiant_id', $etudiant->id)
+                ->where('annee_universitaire', self::ANNEE_UNIVERSITAIRE)
+                ->where('filiere_id', '!=', $filiere->id)
+                ->update(['statut' => 'inactif']);
+
+            Inscription::updateOrCreate(
+                ['etudiant_id' => $etudiant->id, 'filiere_id' => $filiere->id],
                 [
-                    'uuid' => (string) Str::uuid(),
-                    'debut_semestre_1' => '2026-09-15',
-                    'fin_semestre_1' => '2026-12-31',
-                    'debut_examens_s1' => '2027-01-05',
-                    'fin_examens_s1' => '2027-01-20',
-                    'debut_vacances_hiver' => '2027-01-21',
-                    'fin_vacances_hiver' => '2027-02-07',
-                    'debut_semestre_2' => '2027-02-08',
-                    'fin_semestre_2' => '2027-05-28',
-                    'debut_examens_s2' => '2027-06-01',
-                    'fin_examens_s2' => '2027-06-18',
-                    'debut_vacances_ete' => '2027-07-01',
-                    'fin_vacances_ete' => '2027-08-31',
-                    'statut' => 'publie',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'date_inscription' => '2025-09-20',
+                    'statut' => 'actif',
+                    'semestre_courant' => $record['semestre_courant'],
+                    'annee_universitaire' => self::ANNEE_UNIVERSITAIRE,
+                    'moyenne_generale' => null,
                 ]
             );
-        });
+        }
+    }
 
-        $enseignants = collect([
+    private function seedAccreditationEtCalendrier(Institution $institution): void
+    {
+        DB::table('accreditations')->updateOrInsert(
+            ['numero_arrete' => 'ACC-2025-' . $institution->code_etablissement],
+            [
+                'uuid' => (string) Str::uuid(),
+                'institution_id' => $institution->id,
+                'date_arrete' => '2025-07-15',
+                'date_debut' => '2025-09-01',
+                'date_fin' => '2030-08-31',
+                'type' => 'creation',
+                'statut' => 'active',
+                'fichier_arrete_path' => 'arretes/' . strtolower($institution->code_etablissement) . '-2025.pdf',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        DB::table('calendriers_academiques')->updateOrInsert(
+            ['institution_id' => $institution->id, 'annee_universitaire' => self::ANNEE_UNIVERSITAIRE],
+            [
+                'uuid' => (string) Str::uuid(),
+                'debut_semestre_1' => '2026-09-15',
+                'fin_semestre_1' => '2026-12-31',
+                'debut_examens_s1' => '2027-01-05',
+                'fin_examens_s1' => '2027-01-20',
+                'debut_vacances_hiver' => '2027-01-21',
+                'fin_vacances_hiver' => '2027-02-07',
+                'debut_semestre_2' => '2027-02-08',
+                'fin_semestre_2' => '2027-05-28',
+                'debut_examens_s2' => '2027-06-01',
+                'fin_examens_s2' => '2027-06-18',
+                'debut_vacances_ete' => '2027-07-01',
+                'fin_vacances_ete' => '2027-08-31',
+                'statut' => 'publie',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, Enseignant>
+     */
+    private function seedEnseignants(): \Illuminate\Support\Collection
+    {
+        return collect([
             ['nom' => 'Ahmed', 'prenom' => 'Mariam', 'numero_national' => '2000000001', 'numero_accreditation' => 'ENS-2026-0001', 'grade' => 'professeur', 'specialite' => 'Droit public', 'email' => 'mariam.ahmed@mesrs.mr', 'telephone' => '+222 22 10 10 01'],
             ['nom' => 'Sidi', 'prenom' => 'Mohamed', 'numero_national' => '2000000002', 'numero_accreditation' => 'ENS-2026-0002', 'grade' => 'maitre_conference', 'specialite' => 'Economie', 'email' => 'mohamed.sidi@mesrs.mr', 'telephone' => '+222 22 10 10 02'],
             ['nom' => 'Diallo', 'prenom' => 'Aminata', 'numero_national' => '2000000003', 'numero_accreditation' => 'ENS-2026-0003', 'grade' => 'maitre_assistant', 'specialite' => 'Genie logiciel', 'email' => 'aminata.diallo@mesrs.mr', 'telephone' => '+222 22 10 10 03'],
@@ -141,10 +278,17 @@ class DemoDataSeeder extends Seeder
 
             return Enseignant::where('numero_accreditation', $data['numero_accreditation'])->firstOrFail();
         });
+    }
 
+    /**
+     * @param \Illuminate\Support\Collection<int, Enseignant> $enseignants
+     * @param \Illuminate\Support\Collection<int, Filiere> $filieres
+     */
+    private function seedAffectations(\Illuminate\Support\Collection $enseignants, \Illuminate\Support\Collection $filieres): void
+    {
         DB::table('affectation_enseignant')
             ->whereIn('enseignant_id', $enseignants->pluck('id'))
-            ->where('annee_universitaire', 2026)
+            ->where('annee_universitaire', self::ANNEE_UNIVERSITAIRE)
             ->delete();
 
         $filieres->values()->each(function (Filiere $filiere, int $index) use ($enseignants) {
@@ -155,65 +299,24 @@ class DemoDataSeeder extends Seeder
                     'enseignant_id' => $enseignant->id,
                     'institution_id' => $filiere->institution_id,
                     'filiere_id' => $filiere->id,
-                    'annee_universitaire' => 2026,
+                    'annee_universitaire' => self::ANNEE_UNIVERSITAIRE,
                 ],
                 [
-                    'volume_horaire' => 96 + ($index * 12),
+                    'volume_horaire' => 96 + ($index % 6) * 12,
                     'type_contrat' => $index % 2 === 0 ? 'permanent' : 'vacataire',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
             );
         });
-
-        $students = collect([
-            ['nom' => 'Ould Salem', 'prenom' => 'Khaled', 'date_naissance' => '2004-03-12', 'lieu_naissance' => 'Nouakchott', 'numero_national' => '1000000001', 'hash_numero_bac' => 'BAC-2023-0001', 'serie_bac' => 'C', 'annee_bac' => 2023, 'mention_bac' => 'Bien', 'email' => 'khaled.salem@example.com', 'telephone' => '+222 36 00 00 01', 'filiere' => 'LIU-LIC-INFO', 'semestre_courant' => 5, 'moyenne_generale' => 14.75],
-            ['nom' => 'Mint Ely', 'prenom' => 'Fatimetou', 'date_naissance' => '2005-07-24', 'lieu_naissance' => 'Atar', 'numero_national' => '1000000002', 'hash_numero_bac' => 'BAC-2024-0002', 'serie_bac' => 'D', 'annee_bac' => 2024, 'mention_bac' => 'Assez bien', 'email' => 'fatimetou.ely@example.com', 'telephone' => '+222 36 00 00 02', 'filiere' => 'LIU-LIC-GEST', 'semestre_courant' => 3, 'moyenne_generale' => 13.2],
-            ['nom' => 'Ba', 'prenom' => 'Moussa', 'date_naissance' => '2003-11-02', 'lieu_naissance' => 'Kaedi', 'numero_national' => '1000000003', 'hash_numero_bac' => 'BAC-2022-0003', 'serie_bac' => 'C', 'annee_bac' => 2022, 'mention_bac' => 'Tres bien', 'email' => 'moussa.ba@example.com', 'telephone' => '+222 36 00 00 03', 'filiere' => 'SUPM-MAS-FIN', 'semestre_courant' => 2, 'moyenne_generale' => 16.1],
-            ['nom' => 'Cheikh', 'prenom' => 'Aicha', 'date_naissance' => '2004-09-18', 'lieu_naissance' => 'Rosso', 'numero_national' => '1000000004', 'hash_numero_bac' => 'BAC-2023-0004', 'serie_bac' => 'LM', 'annee_bac' => 2023, 'mention_bac' => 'Bien', 'email' => 'aicha.cheikh@example.com', 'telephone' => '+222 36 00 00 04', 'filiere' => 'UCM-LIC-DROIT', 'semestre_courant' => 5, 'moyenne_generale' => 15.4],
-            ['nom' => 'Hamed', 'prenom' => 'Leila', 'date_naissance' => '2002-01-29', 'lieu_naissance' => 'Nouadhibou', 'numero_national' => '1000000005', 'hash_numero_bac' => 'BAC-2021-0005', 'serie_bac' => 'ES', 'annee_bac' => 2021, 'mention_bac' => 'Assez bien', 'email' => 'leila.hamed@example.com', 'telephone' => '+222 36 00 00 05', 'filiere' => 'SUPM-LIC-MGT', 'semestre_courant' => 4, 'moyenne_generale' => 12.85],
-        ])->map(function (array $data) {
-            $filiereCode = $data['filiere'];
-            $semestreCourant = $data['semestre_courant'];
-            $moyenneGenerale = $data['moyenne_generale'];
-            unset($data['filiere'], $data['semestre_courant'], $data['moyenne_generale']);
-
-            Etudiant::updateOrCreate(['email' => $data['email']], $data);
-
-            $etudiant = Etudiant::where('email', $data['email'])->firstOrFail();
-            $filiere = Filiere::where('code_filiere', $filiereCode)->firstOrFail();
-
-            Inscription::where('etudiant_id', $etudiant->id)
-                ->where('annee_universitaire', 2026)
-                ->update(['statut' => 'inactif']);
-
-            Inscription::updateOrCreate(
-                ['etudiant_id' => $etudiant->id, 'filiere_id' => $filiere->id],
-                [
-                    'date_inscription' => '2026-09-20',
-                    'statut' => 'actif',
-                    'semestre_courant' => $semestreCourant,
-                    'annee_universitaire' => 2026,
-                    'moyenne_generale' => $moyenneGenerale,
-                ]
-            );
-
-            return $etudiant;
-        });
-
-        $this->seedUsers($institutions);
-        $this->seedActivityLog();
-        $this->seedPersonalAccessToken();
-
-        $this->command?->info('Demo data seeded for institutions, filieres, students, teachers, accreditations, calendars, assignments, users, activity log and tokens.');
     }
 
-    private function seedUsers($institutions): void
+    private function seedUsers(\Illuminate\Support\Collection $institutions): void
     {
         $users = [
             ['name' => 'Agent Ministere', 'email' => 'ministere@mesrs.gov.mr', 'role' => 'ministere', 'institution_id' => null],
-            ['name' => 'Gestionnaire LIU', 'email' => 'gestionnaire.liu@mesrs.gov.mr', 'role' => 'institution', 'institution_id' => $institutions->firstWhere('code_etablissement', 'LIU')->id],
-            ['name' => 'Gestionnaire SUPM', 'email' => 'gestionnaire.supm@mesrs.gov.mr', 'role' => 'institution', 'institution_id' => $institutions->firstWhere('code_etablissement', 'SUPM')->id],
+            ['name' => 'Gestionnaire LIU', 'email' => 'gestionnaire.liu@mesrs.gov.mr', 'role' => 'institution', 'institution_id' => $institutions['LIU']->id],
+            ['name' => 'Gestionnaire SUPM', 'email' => 'gestionnaire.supm@mesrs.gov.mr', 'role' => 'institution', 'institution_id' => $institutions['SUPM']->id],
             ['name' => 'Utilisateur Verification', 'email' => 'verification@example.com', 'role' => 'public', 'institution_id' => null],
         ];
 
